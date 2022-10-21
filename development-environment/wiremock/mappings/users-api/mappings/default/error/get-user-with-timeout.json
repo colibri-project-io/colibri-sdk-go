@@ -1,0 +1,19 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/users-api/v1/2"
+  },
+  "response": {
+    "status": 200,
+    "fixedDelayMilliseconds": 2000,
+    "headers": {
+      "Content-Type": "application/json; charset=utf-8"
+    },
+    "jsonBody": {
+      "id": 2,
+      "name": "Jaya Ganaka MD",
+      "email": "ganaka_md_jaya@ryan.biz"
+    }
+  }
+}

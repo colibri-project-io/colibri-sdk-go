@@ -1,0 +1,18 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "DELETE",
+    "urlPattern": "/users-api/v1/users/11"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json; charset=utf-8"
+    },
+    "jsonBody": {
+      "id": 11,
+      "name": "User 11 deleted",
+      "email": "user_11@email.com"
+    }
+  }
+}

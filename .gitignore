@@ -11,5 +11,13 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+# Jetbrains IDE
+.idea/
+*.iml
+
+# VsCode IDE
+.vscode/
+.history/
+
 # Dependency directories (remove the comment below to include it)
 # vendor/

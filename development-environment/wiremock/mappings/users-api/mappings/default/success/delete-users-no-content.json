@@ -1,0 +1,10 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "DELETE",
+    "urlPattern": "/users-api/v1/users/12"
+  },
+  "response": {
+    "status": 204
+  }
+}

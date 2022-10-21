@@ -1,0 +1,91 @@
+package sqlDB
+
+import (
+	"database/sql"
+	"reflect"
+	"strings"
+
+	"io"
+
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
+	_ "github.com/newrelic/go-agent/v3/integrations/nrpq"
+)
+
+const (
+	db_connection_success    string = "SQL database connected"
+	db_connection_error      string = "An error occurred while trying to connect to the database. Error: %s"
+	db_migration_error       string = "An error occurred when validate database migrations: %v"
+	db_not_initialized_error string = "database not initialized"
+	query_is_empty_error     string = "query is empty"
+	page_is_empty_error      string = "page is empty"
+)
+
+var instance *sql.DB
+
+// Initialize start connection with sql database and execute migration
+func Initialize() {
+	sqlDB, err := sql.Open(config.SQL_DB_DRIVER, config.DB_CONNECTION_URI)
+	if err != nil {
+		logging.Fatal(db_connection_error, err)
+	}
+
+	if err = sqlDB.Ping(); err != nil {
+		logging.Fatal(db_connection_error, err)
+	}
+
+	instance = sqlDB
+	logging.Info(db_connection_success)
+}
+
+func getDataList[T any](rows *sql.Rows) ([]T, error) {
+	list := make([]T, 0)
+	for rows.Next() {
+		model := new(T)
+		err := rows.Scan(reflectCols(model)...)
+		if err != nil {
+			return nil, err
+		}
+
+		list = append(list, *model)
+	}
+
+	return list, nil
+}
+
+func reflectCols(model any) (cols []any) {
+	typeOf := reflect.TypeOf(model).Elem()
+	valueOf := reflect.ValueOf(model).Elem()
+
+	isStruct, isTime, isNull := reflectValueValidations(valueOf)
+	if !isStruct || isTime || isNull {
+		cols = append(cols, valueOf.Addr().Interface())
+		return
+	}
+
+	for i := 0; i < typeOf.NumField(); i++ {
+		field := valueOf.Field(i)
+
+		isStruct, isTime, isNull := reflectValueValidations(field)
+		if isStruct && !isTime && !isNull {
+			cols = append(cols, reflectCols(field.Addr().Interface())...)
+		} else {
+			cols = append(cols, field.Addr().Interface())
+		}
+	}
+
+	return cols
+}
+
+func reflectValueValidations(value reflect.Value) (isStruct, isTime, isNull bool) {
+	isStruct = value.Kind() == reflect.Struct
+	isTime = value.Type().String() == "time.Time"
+	isNull = strings.Contains(value.Type().String(), "Null")
+	return
+}
+
+func closer(o io.Closer) {
+	if err := o.Close(); err != nil {
+		logging.Error("could not close statement: %v", err)
+	}
+}

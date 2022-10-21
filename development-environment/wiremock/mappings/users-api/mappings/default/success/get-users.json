@@ -1,0 +1,40 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/users-api/v1"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json; charset=utf-8"
+    },
+    "jsonBody": [
+      {
+        "id": 1,
+        "name": "Jaya Ganaka 1",
+        "email": "ganaka_1_jaya@ryan.biz"
+      },
+      {
+        "id": 2,
+        "name": "Jaya Ganaka 2",
+        "email": "ganaka_2_jaya@ryan.biz"
+      },
+      {
+        "id": 3,
+        "name": "Jaya Ganaka 3",
+        "email": "ganaka_3_jaya@ryan.biz"
+      },
+      {
+        "id": 4,
+        "name": "Jaya Ganaka 4",
+        "email": "ganaka_4_jaya@ryan.biz"
+      },
+      {
+        "id": 5,
+        "name": "Jaya Ganaka 5",
+        "email": "ganaka_5_jaya@ryan.biz"
+      }
+    ]
+  }
+}
