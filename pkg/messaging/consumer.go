@@ -27,7 +27,15 @@ func (o consumerObserver) Close() {
 	o.c.close()
 }
 
-func NewConsumer(queueName string, hasDLQ bool, function func(ctx context.Context, message *ProviderMessage) error) {
+func NewConsumerWithDLQ(queueName string, function func(ctx context.Context, message *ProviderMessage) error) {
+	newConsumer(queueName, true, function)
+}
+
+func NewConsumerWithoutDLQ(queueName string, function func(ctx context.Context, message *ProviderMessage) error) {
+	newConsumer(queueName, false, function)
+}
+
+func newConsumer(queueName string, hasDLQ bool, function func(ctx context.Context, message *ProviderMessage) error) {
 	c := &Consumer{
 		WaitGroup: sync.WaitGroup{},
 		queue:     queueName,

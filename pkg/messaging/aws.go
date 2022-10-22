@@ -13,8 +13,15 @@ import (
 )
 
 type sqsNotification struct {
-	MessageId string `json:"MessageId"`
-	Message   string `json:"Message"`
+	Type             string `json:"Type"`
+	TopicArn         string `json:"TopicArn"`
+	MessageId        string `json:"MessageId"`
+	Message          string `json:"Message"`
+	Timestamp        string `json:"Timestamp"`
+	SignatureVersion string `json:"SignatureVersion"`
+	Signature        string `json:"Signature"`
+	SigningCertURL   string `json:"SigningCertURL"`
+	UnsubscribeURL   string `json:"UnsubscribeURL"`
 }
 
 type awsMessaging struct {
@@ -71,6 +78,7 @@ func (m *awsMessaging) consumer(ctx context.Context, c *Consumer) (chan *Provide
 				if err = json.Unmarshal([]byte(n.Message), &pm); err != nil {
 					logging.Error(couldNotReadMsgBody, *msg.MessageId, c.queue, err)
 				} else {
+					pm.addOriginBrokerNotification(&n)
 					ch <- &pm
 					m.removeMessageFromQueue(ctx, queueUrl, msg)
 				}
@@ -101,11 +109,17 @@ func (m *awsMessaging) removeMessageFromQueue(ctx context.Context, queueResult *
 	}
 }
 
-func (m *awsMessaging) sendToDLQ(ctx context.Context, queue string, msg *ProviderMessage) error {
+func (m *awsMessaging) sendToDLQ(ctx context.Context, queue string, pm *ProviderMessage) error {
 	queueUrl := m.getQueueUrl(ctx, queue)
+	n := pm.n.(*sqsNotification)
+	n.Message = pm.String()
+	notificationStr, err := json.Marshal(n)
+	if err != nil {
+		return err
+	}
 
-	if _, err := m.sqsService.SendMessage(&sqs.SendMessageInput{
-		MessageBody: aws.String(msg.String()),
+	if _, err = m.sqsService.SendMessage(&sqs.SendMessageInput{
+		MessageBody: aws.String(string(notificationStr)),
 		QueueUrl:    queueUrl.QueueUrl,
 	}); err != nil {
 		return err
