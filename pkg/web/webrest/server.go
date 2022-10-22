@@ -3,6 +3,7 @@ package webrest
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/graceful-shutdown"
 	"io"
 	"log"
 	"net/http"
@@ -21,7 +22,7 @@ const (
 	AuthenticatedApi RoutePrefix = "/api/"
 )
 
-type HealtCheck struct {
+type HealthCheck struct {
 	Status string `json:"status"`
 }
 
@@ -59,6 +60,16 @@ func create() *mux.Router {
 	return router
 }
 
+type restObserver struct{}
+
+func (o restObserver) Close() {
+	logging.Info("closing http server")
+	if err := srv.Close(); err != nil {
+		logging.Error("error when closing http server: %v", err)
+	}
+	srv = nil
+}
+
 func ListenAndServe() {
 	addHealthCheckRoute()
 
@@ -70,11 +81,12 @@ func ListenAndServe() {
 	}
 
 	logging.Info("Service '%s' running in %d port", "WEB-REST", config.PORT)
+	gracefulshutdown.Attach(restObserver{})
 	log.Fatal(srv.ListenAndServe())
 }
 
 func addHealthCheckRoute() {
-	health := &HealtCheck{"OK"}
+	health := &HealthCheck{"OK"}
 	appRoutes = append(appRoutes, Route{
 		URI:    "/health",
 		Method: http.MethodGet,

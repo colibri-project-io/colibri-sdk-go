@@ -37,8 +37,7 @@ func TestMessagingSuccess(t *testing.T) {
 	}
 
 	producer := NewProducer(testTopicName)
-	AddConsumer(NewConsumer(testQueueName, consumer))
-	initializeConsumers()
+	NewConsumer(testQueueName, true, consumer)
 
 	model := userMessageTest{"User Name", "user@email.com"}
 	producer.Publish(context.Background(), "create", model)
@@ -56,8 +55,7 @@ func TestMessagingFail(t *testing.T) {
 	}
 
 	producer := NewProducer(testFailTopicName)
-	AddConsumer(NewConsumer(testFailQueueName, consumer))
-	initializeConsumers()
+	NewConsumer(testFailQueueName, true, consumer)
 
 	model := userMessageTest{"User Name", "user@email.com"}
 	producer.Publish(context.Background(), "create", model)

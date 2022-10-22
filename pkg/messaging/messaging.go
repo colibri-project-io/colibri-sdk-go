@@ -17,13 +17,12 @@ const (
 
 type messaging interface {
 	producer(ctx context.Context, p *Producer, msg *ProviderMessage) error
-	consumer(ctx context.Context, queue string) (chan *ProviderMessage, error)
+	consumer(ctx context.Context, c *Consumer) (chan *ProviderMessage, error)
 	sendToDLQ(ctx context.Context, queue string, msg *ProviderMessage) error
 }
 
 var (
-	instance     messaging
-	appConsumers []Consumer
+	instance messaging
 )
 
 func Initialize() {
@@ -35,5 +34,4 @@ func Initialize() {
 	}
 
 	logging.Info("Message broker connected")
-	initializeConsumers()
 }

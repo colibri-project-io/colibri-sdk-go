@@ -44,15 +44,19 @@ func (m *awsMessaging) producer(ctx context.Context, p *Producer, msg *ProviderM
 	return err
 }
 
-func (m *awsMessaging) consumer(ctx context.Context, queue string) (chan *ProviderMessage, error) {
+func (m *awsMessaging) consumer(ctx context.Context, c *Consumer) (chan *ProviderMessage, error) {
 	ch := make(chan *ProviderMessage, 1)
-	queueUrl := m.getQueueUrl(ctx, queue)
+	queueUrl := m.getQueueUrl(ctx, c.queue)
 
 	go func() {
 		for {
+			if c.isCanceled() {
+				c.Done()
+				return
+			}
 			msgs, err := m.readMessages(ctx, queueUrl)
 			if err != nil {
-				logging.Error("Could not read messages from queue %s. Error: %v", queue, err)
+				logging.Error("Could not read messages from queue %s. Error: %v", c.queue, err)
 			}
 
 			if len(msgs.Messages) > 0 {
@@ -60,12 +64,12 @@ func (m *awsMessaging) consumer(ctx context.Context, queue string) (chan *Provid
 
 				var n sqsNotification
 				if err = json.Unmarshal([]byte(*msg.Body), &n); err != nil {
-					logging.Error(couldNotReadMsgBody, *msg.MessageId, queue, err)
+					logging.Error(couldNotReadMsgBody, *msg.MessageId, c.queue, err)
 				}
 
 				var pm ProviderMessage
-				if err = json.Unmarshal(([]byte(n.Message)), &pm); err != nil {
-					logging.Error(couldNotReadMsgBody, *msg.MessageId, queue, err)
+				if err = json.Unmarshal([]byte(n.Message), &pm); err != nil {
+					logging.Error(couldNotReadMsgBody, *msg.MessageId, c.queue, err)
 				} else {
 					ch <- &pm
 					m.removeMessageFromQueue(ctx, queueUrl, msg)

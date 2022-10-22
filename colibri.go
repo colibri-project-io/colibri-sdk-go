@@ -2,6 +2,7 @@ package colibri
 
 import (
 	"fmt"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/graceful-shutdown"
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/cloud"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
@@ -29,6 +30,7 @@ func InitializeApp() {
 	printBanner()
 	printApplicationName()
 
+	gracefulshutdown.Initialize()
 	monitoring.Initialize()
 	cloud.Initialize()
 }
