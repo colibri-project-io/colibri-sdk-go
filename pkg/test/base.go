@@ -3,6 +3,7 @@ package test
 import (
 	"context"
 	"fmt"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/graceful-shutdown"
 	"log"
 	"os"
 	"sync"
@@ -51,5 +52,6 @@ func loadConfig() {
 		log.Fatalf("could not start configuration: %v", err)
 		return
 	}
+	gracefulshutdown.Initialize()
 	monitoring.Initialize()
 }

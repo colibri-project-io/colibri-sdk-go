@@ -3,6 +3,8 @@ package messaging
 import (
 	"context"
 	"fmt"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/graceful-shutdown"
+	"sync"
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/monitoring"
@@ -10,32 +12,49 @@ import (
 )
 
 type Consumer struct {
-	queue string
-	fn    func(ctx context.Context, message *ProviderMessage) error
+	sync.WaitGroup
+	queue  string
+	fn     func(ctx context.Context, message *ProviderMessage) error
+	done   chan interface{}
+	hasDLQ bool
 }
 
-func NewConsumer(queueName string, function func(ctx context.Context, message *ProviderMessage) error) (c Consumer) {
-	c.queue = queueName
-	c.fn = function
-	return
+type consumerObserver struct {
+	c *Consumer
 }
 
-func AddConsumer(consumer Consumer) {
-	appConsumers = append(appConsumers, consumer)
+func (o consumerObserver) Close() {
+	o.c.close()
 }
 
-func initializeConsumers() {
-	for _, consumer := range appConsumers {
-		consumer.executeConsumer()
+func NewConsumerWithDLQ(queueName string, function func(ctx context.Context, message *ProviderMessage) error) {
+	newConsumer(queueName, true, function)
+}
+
+func NewConsumerWithoutDLQ(queueName string, function func(ctx context.Context, message *ProviderMessage) error) {
+	newConsumer(queueName, false, function)
+}
+
+func newConsumer(queueName string, hasDLQ bool, function func(ctx context.Context, message *ProviderMessage) error) {
+	c := &Consumer{
+		WaitGroup: sync.WaitGroup{},
+		queue:     queueName,
+		fn:        function,
+		done:      make(chan interface{}),
+		hasDLQ:    hasDLQ,
 	}
+
+	gracefulshutdown.Attach(consumerObserver{c: c})
+	startListener(c)
 }
 
-func (c Consumer) executeConsumer() {
-	ctx, ch := createConsumer(c.queue)
+func startListener(c *Consumer) {
+	ch := createConsumer(c)
 
 	go func() {
 		for {
 			msg := <-ch
+			ctx := context.Background()
 			security.NewAuthenticationContext(msg.TenantId, msg.UserId).SetInContext(ctx)
 			if err := c.fn(ctx, msg); err != nil {
 				c.sendMessageDLQ(ctx, msg, err)
@@ -44,21 +63,24 @@ func (c Consumer) executeConsumer() {
 	}()
 }
 
-func createConsumer(queueName string) (context.Context, chan *ProviderMessage) {
-	txn, ctx := monitoring.StartTransaction(fmt.Sprintf(messaging_consumer_transaction, queueName))
+func createConsumer(c *Consumer) chan *ProviderMessage {
+	txn, ctx := monitoring.StartTransaction(fmt.Sprintf(messaging_consumer_transaction, c.queue))
 	defer monitoring.EndTransaction(txn)
 
-	ch, err := instance.consumer(ctx, queueName)
+	ch, err := instance.consumer(ctx, c)
 	if err != nil {
-		logging.Error("An error occurred when trying to create a consumer to queue %s. Error: %v", queueName, err)
+		logging.Error("An error occurred when trying to create a consumer to queue %s. Error: %v", c.queue, err)
 		monitoring.NoticeError(txn, err)
-		return nil, nil
+		return nil
 	}
 
-	return ctx, ch
+	return ch
 }
 
-func (c Consumer) sendMessageDLQ(ctx context.Context, msg *ProviderMessage, err error) {
+func (c *Consumer) sendMessageDLQ(ctx context.Context, msg *ProviderMessage, err error) {
+	if !c.hasDLQ {
+		return
+	}
 	dlqQueueName := fmt.Sprintf("%s_DLQ", c.queue)
 	txn := monitoring.GetTransactionInContext(ctx)
 	if txn != nil {
@@ -68,11 +90,26 @@ func (c Consumer) sendMessageDLQ(ctx context.Context, msg *ProviderMessage, err 
 		defer monitoring.EndTransactionSegment(segment)
 	}
 
-	logging.Error("An error ocurred on processing message with id %s from queue %s. Sending to DLQ. Error: %v", msg.Id, c.queue, err)
+	logging.Error("An error occurred on processing message with id %s from queue %s. Sending to DLQ. Error: %v", msg.Id, c.queue, err)
 	monitoring.NoticeError(txn, err)
 
 	if err = instance.sendToDLQ(ctx, dlqQueueName, msg); err != nil {
 		logging.Error("Error on send message with id %s from DQL %s. Error: %v", msg.Id, dlqQueueName, err)
 		monitoring.NoticeError(txn, err)
+	}
+}
+
+func (c *Consumer) close() {
+	logging.Info("closing queue consumer %s", c.queue)
+	close(c.done)
+	c.Wait()
+}
+
+func (c *Consumer) isCanceled() bool {
+	select {
+	case <-c.done:
+		return true
+	default:
+		return false
 	}
 }

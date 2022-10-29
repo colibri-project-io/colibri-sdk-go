@@ -2,6 +2,7 @@ package sqlDB
 
 import (
 	"database/sql"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/graceful-shutdown"
 	"reflect"
 	"strings"
 
@@ -21,6 +22,16 @@ const (
 	page_is_empty_error      string = "page is empty"
 )
 
+type sqlDBObserver struct{}
+
+// Close method called when shutdown signal
+func (o sqlDBObserver) Close() {
+	logging.Info("closing database connection")
+	if err := instance.Close(); err != nil {
+		logging.Error("error when closing database connection: %v", err)
+	}
+}
+
 var instance *sql.DB
 
 // Initialize start connection with sql database and execute migration
@@ -35,6 +46,8 @@ func Initialize() {
 	}
 
 	instance = sqlDB
+
+	gracefulshutdown.Attach(sqlDBObserver{})
 	logging.Info(db_connection_success)
 }
 

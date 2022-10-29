@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/graceful-shutdown"
 	"net"
 	"net/http"
 	"strings"
@@ -29,6 +30,7 @@ func TestRestServer(t *testing.T) {
 		return l
 	}
 
+	gracefulshutdown.Initialize()
 	monitoring.Initialize()
 	AddRoutes([]Route{
 		{
@@ -61,14 +63,14 @@ func TestRestServer(t *testing.T) {
 
 	l := listener()
 	config.PORT = l.Addr().(*net.TCPAddr).Port
-	l.Close()
+	assert.NoError(t, l.Close())
 
 	go ListenAndServe()
 	time.Sleep(1 * time.Second)
 	client := NewRestClient("test-server", fmt.Sprintf("http://localhost:%d", config.PORT), 1)
 
 	t.Run("Should return status 200 (OK) in health-check", func(t *testing.T) {
-		resp, err := Get[HealtCheck](context.Background(), client, "/health", nil)
+		resp, err := Get[HealthCheck](context.Background(), client, "/health", nil)
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.Equal(t, "OK", resp.Status)
@@ -134,10 +136,10 @@ func TestDecodeBody(t *testing.T) {
 	}
 
 	expected := &RequestDecodeBody{Name: "Zezinho", Age: 25}
-	json, _ := json.Marshal(expected)
+	jsonEncoded, _ := json.Marshal(expected)
 
 	t.Run("Should decode body with success", func(t *testing.T) {
-		r, _ := http.NewRequest("POST", "/my-endpoint", strings.NewReader(string(json)))
+		r, _ := http.NewRequest("POST", "/my-endpoint", strings.NewReader(string(jsonEncoded)))
 		result, err := DecodeBody[RequestDecodeBody](r)
 		assert.NoError(t, err)
 		assert.NotNil(t, result)

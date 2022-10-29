@@ -14,14 +14,17 @@ type ProviderMessage struct {
 	TenantId uuid.UUID   `json:"tenantId"`
 	UserId   uuid.UUID   `json:"userId"`
 	Message  interface{} `json:"message"`
+	n        interface{}
 }
 
-func (msg ProviderMessage) String() string {
+// String convert struct into json string
+func (msg *ProviderMessage) String() string {
 	message, _ := json.Marshal(msg)
 
 	return string(message)
 }
 
+// DecodeMessage transform interface into ProviderMessage
 func (msg *ProviderMessage) DecodeMessage(model interface{}) error {
 	buf := new(bytes.Buffer)
 
@@ -34,4 +37,9 @@ func (msg *ProviderMessage) DecodeMessage(model interface{}) error {
 	}
 
 	return nil
+}
+
+// addOriginBrokerNotification add reference of origin broker message to send dlq if an error occurs
+func (msg *ProviderMessage) addOriginBrokerNotification(n interface{}) {
+	msg.n = n
 }

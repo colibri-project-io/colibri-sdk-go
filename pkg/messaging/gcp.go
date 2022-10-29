@@ -28,19 +28,26 @@ func (m *gcpMessaging) producer(ctx context.Context, p *Producer, msg *ProviderM
 	return err
 }
 
-func (m *gcpMessaging) consumer(ctx context.Context, queue string) (chan *ProviderMessage, error) {
+func (m *gcpMessaging) consumer(ctx context.Context, c *Consumer) (chan *ProviderMessage, error) {
 	ch := make(chan *ProviderMessage, 1)
-	sub := m.client.Subscription(queue)
+	sub := m.client.Subscription(c.queue)
 	go func() {
-		sub.Receive(ctx, func(ctx context.Context, msg *pubsub.Message) {
+		err := sub.Receive(ctx, func(innerCtx context.Context, msg *pubsub.Message) {
+			if c.isCanceled() {
+				c.Done()
+				return
+			}
 			var pm ProviderMessage
-			if err := json.Unmarshal(([]byte(msg.Data)), &pm); err != nil {
-				logging.Error(couldNotReadMsgBody, msg.ID, queue, err)
+			if err := json.Unmarshal(msg.Data, &pm); err != nil {
+				logging.Error(couldNotReadMsgBody, msg.ID, c.queue, err)
 			} else {
 				ch <- &pm
 				msg.Ack()
 			}
 		})
+		if err != nil {
+			logging.Error("Error on receive message from queue %s: %v", c.queue, err)
+		}
 	}()
 
 	return ch, nil
