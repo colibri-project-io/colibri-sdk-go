@@ -30,6 +30,7 @@ const (
 	error_cloud_not_configured                      string = "cloud is not configured. Set aws, gcp or firebase"
 	error_production_required_params_not_configured string = "production required params not configured. Set NEW_RELIC_LICENSE"
 	error_database_misconfigured                    string = "database is misconfigured. Set sql or nosql"
+	error_boolean_parse                             string = "could not parse %s, permited 'true' or 'false', got %v: %w"
 )
 
 var (
@@ -44,10 +45,13 @@ var (
 	CLOUD_TOKEN       string
 	CLOUD_DISABLE_SSL bool
 	DB                string
+	DB_NAME           string
 	DB_CONNECTION_URI string
 	PORT              int
 	CACHE_URI         string
 	CACHE_PASSWORD    string
+
+	EXEC_MIGRATION = true
 )
 
 func Load() error {
@@ -93,14 +97,23 @@ func Load() error {
 		return errors.New(error_database_misconfigured)
 	}
 
+	DB_NAME = os.Getenv("DB_NAME")
 	DB_CONNECTION_URI = fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s application_name='%s' sslmode=%s",
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_PORT"),
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
+		DB_NAME,
 		APP_NAME,
 		os.Getenv("DB_SSL_MODE"))
+
+	execMigration := os.Getenv("EXEC_MIGRATION")
+	if execMigration != "" {
+		var err error
+		if EXEC_MIGRATION, err = strconv.ParseBool(execMigration); err != nil {
+			return fmt.Errorf(error_boolean_parse, "EXEC_MIGRATION", execMigration, err)
+		}
+	}
 
 	return nil
 }

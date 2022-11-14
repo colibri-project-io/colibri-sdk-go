@@ -146,6 +146,11 @@ func TestLoad(t *testing.T) {
 		assert.Equal(t, DB_CONNECTION_URI, dbConnectionUri)
 		assert.Nil(t, err)
 	})
+
+	t.Run("Wrong EXEC_MIGRATION value", func(t *testing.T) {
+		assert.NoError(t, os.Setenv("EXEC_MIGRATION", "xpto"))
+		assert.Error(t, Load())
+	})
 }
 
 func TestIsProductionEnviroment(t *testing.T) {

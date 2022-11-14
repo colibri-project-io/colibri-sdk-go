@@ -47,6 +47,10 @@ func Initialize() {
 
 	instance = sqlDB
 
+	if err = migrations(); err != nil {
+		logging.Fatal(db_migration_error, err)
+	}
+
 	gracefulshutdown.Attach(sqlDBObserver{})
 	logging.Info(db_connection_success)
 }
