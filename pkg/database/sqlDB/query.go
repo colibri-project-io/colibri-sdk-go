@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/transaction"
-
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/database/cacheDB"
 )
 
@@ -108,7 +106,7 @@ func (q *Query[T]) validate() error {
 }
 
 func (q *Query[T]) queryContext() (*sql.Rows, error) {
-	if tx := q.ctx.Value(transaction.SqlTxContext); tx != nil {
+	if tx := q.ctx.Value(SqlTxContext); tx != nil {
 		return tx.(*sql.Tx).QueryContext(q.ctx, q.query, q.args...)
 	}
 
@@ -116,7 +114,7 @@ func (q *Query[T]) queryContext() (*sql.Rows, error) {
 }
 
 func (q *Query[T]) queryRowContext() *sql.Row {
-	if tx := q.ctx.Value(transaction.SqlTxContext); tx != nil {
+	if tx := q.ctx.Value(SqlTxContext); tx != nil {
 		return tx.(*sql.Tx).QueryRowContext(q.ctx, q.query, q.args...)
 	}
 

@@ -8,6 +8,8 @@ import (
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/transaction"
 )
 
+const SqlTxContext = "SqlTxContext"
+
 type sqlTransaction struct {
 	isolation sql.IsolationLevel
 }
@@ -33,7 +35,7 @@ func (t *sqlTransaction) ExecTx(ctx context.Context, fn func(ctx context.Context
 	}
 	defer close(txCh)
 
-	ctx = context.WithValue(ctx, transaction.SqlTxContext, tx)
+	ctx = context.WithValue(ctx, SqlTxContext, tx)
 
 	if err = fn(ctx); err != nil {
 		if rbErr := tx.Rollback(); rbErr != nil {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/transaction"
 )
 
 // Statement struct
@@ -51,7 +50,7 @@ func (s *Statement) validate() error {
 }
 
 func (s *Statement) createStatement() (*sql.Stmt, error) {
-	if tx := s.ctx.Value(transaction.SqlTxContext); tx != nil {
+	if tx := s.ctx.Value(SqlTxContext); tx != nil {
 		return tx.(*sql.Tx).PrepareContext(s.ctx, s.query)
 	}
 
