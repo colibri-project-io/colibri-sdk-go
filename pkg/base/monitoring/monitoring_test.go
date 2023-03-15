@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"testing"
 	"time"
@@ -18,7 +19,7 @@ import (
 func TestProductionMonitoring(t *testing.T) {
 	config.NEW_RELIC_LICENSE = "abcdefghijklmopqrstuvwxyz1234567890aNRAL"
 	config.APP_NAME = "test"
-	config.ENVIRONMENT = config.ENV_PRODUCTION
+	config.ENVIRONMENT = config.ENVIRONMENT_PRODUCTION
 	assert.True(t, config.IsProductionEnvironment())
 
 	Initialize()
@@ -36,7 +37,7 @@ func TestProductionMonitoring(t *testing.T) {
 	t.Run("Should get transaction in context", func(t *testing.T) {
 		txnName := "txn-test"
 
-		_, ctx := StartTransaction(txnName)
+		_, ctx := StartTransaction(context.Background(), txnName)
 		transaction := GetTransactionInContext(ctx)
 		EndTransaction(transaction)
 
@@ -52,8 +53,11 @@ func TestProductionMonitoring(t *testing.T) {
 	t.Run("Should start/end transaction, start/end segment and notice error", func(t *testing.T) {
 		txnName := "txn-test"
 		segName := "txn-segment-test"
+		var w http.ResponseWriter
 
-		transaction, ctx := StartTransaction(txnName)
+		transaction, ctx := StartTransaction(context.Background(), txnName)
+		SetWebRequest(transaction, http.Header{}, &url.URL{}, http.MethodGet)
+		SetWebResponse(transaction, w)
 		segment := StartTransactionSegment(transaction, segName, map[string]interface{}{
 			"TestKey": "TestValue",
 		})
@@ -78,11 +82,12 @@ func TestNonProductionMonitoring(t *testing.T) {
 	}
 
 	formatExpected := func(text string) string {
-		return fmt.Sprintf("%s INFO %s\n", time.Now().Format("2006/01/02 15:04:05"), text)
+		return fmt.Sprintf("%s DEBUG %s\n", time.Now().Format("2006/01/02 15:04:05"), text)
 	}
 
 	config.APP_NAME = "colibri-project-test"
-	config.ENVIRONMENT = config.ENV_TEST
+	config.ENVIRONMENT = config.ENVIRONMENT_TEST
+	config.DEBUG = true
 	assert.False(t, config.IsProductionEnvironment())
 
 	Initialize()
@@ -102,7 +107,7 @@ func TestNonProductionMonitoring(t *testing.T) {
 		text := fmt.Sprintf("Starting transaction monitoring with name %s", name)
 
 		output := captureOutput(func() {
-			transaction, ctx := StartTransaction(name)
+			transaction, ctx := StartTransaction(context.Background(), name)
 			assert.Nil(t, transaction)
 			assert.Empty(t, ctx)
 		})

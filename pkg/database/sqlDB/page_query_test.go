@@ -5,13 +5,13 @@ import (
 	"testing"
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/test"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/types"
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/test"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestPageQueryWithoutInitialize(t *testing.T) {
-	basePath := test.MountAbsolutPath("../../../development-environment/database/")
+	basePath := test.MountAbsolutPath(test.DATABASE_ENVIRONMENT_PATH)
 
 	test.InitializeSqlDBTest()
 	pc := test.UsePostgresContainer()
@@ -45,7 +45,7 @@ func TestPageQuery(t *testing.T) {
 	}
 	page := types.NewPageRequest(1, 1, orders)
 
-	basePath := test.MountAbsolutPath("../../../development-environment/database/")
+	basePath := test.MountAbsolutPath(test.DATABASE_ENVIRONMENT_PATH)
 	test.InitializeSqlDBTest()
 	pc := test.UsePostgresContainer()
 	if err := pc.Dataset(basePath, "schema.sql"); err != nil {

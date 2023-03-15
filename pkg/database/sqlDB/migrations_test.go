@@ -2,18 +2,21 @@ package sqlDB
 
 import (
 	"context"
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/test"
-	"github.com/stretchr/testify/assert"
+	"fmt"
 	"os"
 	"testing"
+
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/test"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMigrations(t *testing.T) {
-	basePath := test.MountAbsolutPath("../../../development-environment/database/")
-	assert.NoError(t, os.Setenv("EXEC_MIGRATION", "true"))
+	basePath := test.MountAbsolutPath(test.DATABASE_ENVIRONMENT_PATH)
+	assert.NoError(t, os.Setenv(config.ENV_SQL_DB_MIGRATION, "true"))
 
 	t.Run("should execute migration successfully and find users", func(t *testing.T) {
-		assert.NoError(t, os.Setenv("MIGRATION_SOURCE_URL", "../../../development-environment/database/migrations"))
+		assert.NoError(t, os.Setenv("MIGRATION_SOURCE_URL", fmt.Sprintf("%smigrations", test.DATABASE_ENVIRONMENT_PATH)))
 
 		test.InitializeSqlDBTest()
 		pc := test.UsePostgresContainer()

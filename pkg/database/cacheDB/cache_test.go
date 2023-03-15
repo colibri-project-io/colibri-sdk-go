@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/test"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/test"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -44,6 +44,37 @@ func TestCache(t *testing.T) {
 		cache := Cache[userCached]{}
 
 		_, err := cache.Many(context.Background())
+		assert.NotNil(t, err)
+	})
+
+	t.Run("Should return error when cache name is empty value on call one", func(t *testing.T) {
+		cache := Cache[userCached]{}
+
+		_, err := cache.One(context.Background())
+		assert.NotNil(t, err)
+	})
+
+	t.Run("Should return error when cache name is empty value on call set", func(t *testing.T) {
+		cache := Cache[userCached]{}
+
+		err := cache.Set(context.Background(), cache)
+		assert.NotNil(t, err)
+	})
+
+	t.Run("Should return error when cache name is empty value on call del", func(t *testing.T) {
+		cache := Cache[userCached]{}
+
+		err := cache.Del(context.Background())
+		assert.NotNil(t, err)
+	})
+
+	t.Run("Should return error when occurred error in json unmarshal on set data in cache", func(t *testing.T) {
+		cache := NewCache[userCached]("cache-test", time.Hour)
+		invalid := map[string]interface{}{
+			"invalid": make(chan int),
+		}
+
+		err := cache.Set(context.Background(), invalid)
 		assert.NotNil(t, err)
 	})
 

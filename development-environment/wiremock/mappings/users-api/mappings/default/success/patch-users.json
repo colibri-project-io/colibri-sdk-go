@@ -1,0 +1,25 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "PATCH",
+    "urlPattern": "/users-api/v1/users/10",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "name": "User 10 edited"
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json; charset=utf-8"
+    },
+    "jsonBody": {
+      "id": 10,
+      "name": "User 10 edited",
+      "email": "user_10@email.com"
+    }
+  }
+}

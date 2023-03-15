@@ -6,14 +6,14 @@ import (
 	"time"
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/test"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/test"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/database/cacheDB"
 )
 
 func TestQueryWithoutInitialize(t *testing.T) {
-	basePath := test.MountAbsolutPath("../../../development-environment/database/")
+	basePath := test.MountAbsolutPath(test.DATABASE_ENVIRONMENT_PATH)
 
 	test.InitializeSqlDBTest()
 	pc := test.UsePostgresContainer()
@@ -62,7 +62,7 @@ func TestQueryWithoutInitialize(t *testing.T) {
 }
 
 func TestQuery(t *testing.T) {
-	basePath := test.MountAbsolutPath("../../../development-environment/database/")
+	basePath := test.MountAbsolutPath(test.DATABASE_ENVIRONMENT_PATH)
 
 	test.InitializeSqlDBTest()
 	pc := test.UsePostgresContainer()
@@ -149,7 +149,7 @@ func TestQuery(t *testing.T) {
 }
 
 func TestQueryWithoutCacheDBInitialize(t *testing.T) {
-	basePath := test.MountAbsolutPath("../../../development-environment/database/")
+	basePath := test.MountAbsolutPath(test.DATABASE_ENVIRONMENT_PATH)
 
 	test.InitializeSqlDBTest()
 	pc := test.UsePostgresContainer()
@@ -228,7 +228,7 @@ func TestQueryWithoutCacheDBInitialize(t *testing.T) {
 }
 
 func TestCachedQuery(t *testing.T) {
-	basePath := test.MountAbsolutPath("../../../development-environment/database/")
+	basePath := test.MountAbsolutPath(test.DATABASE_ENVIRONMENT_PATH)
 
 	test.InitializeCacheDBTest()
 	test.InitializeSqlDBTest()

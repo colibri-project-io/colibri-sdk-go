@@ -21,6 +21,7 @@ type storage interface {
 
 var instance storage
 
+// Initialize loads the storage settings according to the configured environment.
 func Initialize() {
 	switch config.CLOUD {
 	case config.CLOUD_AWS:

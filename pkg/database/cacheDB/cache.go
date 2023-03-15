@@ -11,13 +11,13 @@ import (
 )
 
 // Cache struct
-type Cache[T interface{}] struct {
+type Cache[T any] struct {
 	name string
 	ttl  time.Duration
 }
 
 // NewCache create a new pointer to Cache struct.
-func NewCache[T interface{}](name string, ttl time.Duration) *Cache[T] {
+func NewCache[T any](name string, ttl time.Duration) *Cache[T] {
 	return &Cache[T]{name, ttl}
 }
 
@@ -60,12 +60,16 @@ func (c *Cache[T]) One(ctx context.Context) (*T, error) {
 }
 
 // Set save data in cacheDB
-func (c *Cache[T]) Set(ctx context.Context, data interface{}) error {
+func (c *Cache[T]) Set(ctx context.Context, data any) error {
 	if err := c.validate(); err != nil {
 		return err
 	}
 
-	jsonData, _ := json.Marshal(data)
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
 	return instance.Set(ctx, c.getNamePrefixed(), jsonData, c.ttl).Err()
 }
 

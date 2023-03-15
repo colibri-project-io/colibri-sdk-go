@@ -2,10 +2,10 @@ package cacheDB
 
 import (
 	"context"
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/graceful-shutdown"
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/observer"
 	"github.com/go-redis/redis/v8"
 	"github.com/newrelic/go-agent/v3/integrations/nrredis-v8"
 )
@@ -31,6 +31,7 @@ func Initialize() {
 	}
 
 	instance = redisClient
-	gracefulshutdown.Attach(cacheDBObserver{})
+	logging.Info("Cache database connected")
+	observer.Attach(cacheDBObserver{})
 	logging.Info("Cache database connected")
 }

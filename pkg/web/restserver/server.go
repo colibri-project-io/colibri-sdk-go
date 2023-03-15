@@ -1,0 +1,50 @@
+package restserver
+
+import (
+	"log"
+
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/observer"
+)
+
+var (
+	srvRoutes         []Route
+	customMiddlewares []CustomMiddleware
+	srv               Server
+)
+
+// Server is the contract to http server implementation
+type Server interface {
+	initialize()
+	shutdown() error
+	injectMiddlewares()
+	injectCustomMiddlewares()
+	injectRoutes()
+	listenAndServe() error
+}
+
+// AddRoutes add list of routes in the webrest server
+func AddRoutes(routes []Route) {
+	srvRoutes = append(srvRoutes, routes...)
+}
+
+func Use(m CustomMiddleware) {
+	customMiddlewares = append(customMiddlewares, m)
+}
+
+// ListenAndServe initialize, configure and expose the webrest server
+func ListenAndServe() {
+	addHealthCheckRoute()
+	addDocumentationRoute()
+
+	srv = createServer()
+	srv.initialize()
+	srv.injectMiddlewares()
+	srv.injectCustomMiddlewares()
+	srv.injectRoutes()
+
+	observer.Attach(restObserver{})
+	logging.Info("Service '%s' running in %d port", "WEB-REST", config.PORT)
+	log.Fatal(srv.listenAndServe())
+}

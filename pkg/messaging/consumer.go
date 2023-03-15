@@ -3,11 +3,11 @@ package messaging
 import (
 	"context"
 	"fmt"
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/graceful-shutdown"
 	"sync"
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/monitoring"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/observer"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/security"
 )
 
@@ -44,7 +44,7 @@ func newConsumer(queueName string, hasDLQ bool, function func(ctx context.Contex
 		hasDLQ:    hasDLQ,
 	}
 
-	gracefulshutdown.Attach(consumerObserver{c: c})
+	observer.Attach(consumerObserver{c: c})
 	startListener(c)
 }
 
@@ -64,7 +64,7 @@ func startListener(c *Consumer) {
 }
 
 func createConsumer(c *Consumer) chan *ProviderMessage {
-	txn, ctx := monitoring.StartTransaction(fmt.Sprintf(messaging_consumer_transaction, c.queue))
+	txn, ctx := monitoring.StartTransaction(context.Background(), fmt.Sprintf(messaging_consumer_transaction, c.queue))
 	defer monitoring.EndTransaction(txn)
 
 	ch, err := instance.consumer(ctx, c)

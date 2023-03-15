@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"os"
-	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,337 +21,373 @@ const (
 	cloud_disable_ssl_value = "true"
 	port_value              = "8081"
 	cache_uri_value         = "my-cache-fake:6379"
-	db_value                = "sql"
-	db_name_value           = "my-db-name"
-	db_host_value           = "my-db-host"
-	db_port_value           = "1234"
-	db_user_value           = "my-db-user"
-	db_password_value       = "my-db-password"
-	db_ssl_mode_value       = "disable"
+	cache_password_value    = "my-cache-password"
+	sql_db_name_value       = "my-db-name"
+	sql_db_host_value       = "my-db-host"
+	sql_db_port_value       = "1234"
+	sql_db_user_value       = "my-db-user"
+	sql_db_password_value   = "my-db-password"
+	sql_db_ssl_mode_value   = "disable"
 )
 
-func TestLoad(t *testing.T) {
+func TestEnvironmentProfiles(t *testing.T) {
 	t.Run("Should return error when enviroment is not configured", func(t *testing.T) {
 		assert.EqualError(t, Load(), error_enviroment_not_configured)
 	})
 
 	t.Run("Should return error when enviroment contains a invalid value", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", invalid_value)
+		assert.NoError(t, os.Setenv(ENV_ENVIRONMENT, invalid_value))
 
 		err := Load()
-
-		assert.Equal(t, ENVIRONMENT, invalid_value)
+		assert.Equal(t, invalid_value, ENVIRONMENT)
 		assert.EqualError(t, err, error_enviroment_not_configured)
 	})
 
+	t.Run("Should configure with production environment", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_ENVIRONMENT, ENVIRONMENT_PRODUCTION))
+
+		Load()
+		assert.Equal(t, ENVIRONMENT_PRODUCTION, ENVIRONMENT)
+		assert.True(t, IsProductionEnvironment())
+		assert.False(t, IsSandboxEnvironment())
+		assert.False(t, IsTestEnvironment())
+		assert.False(t, IsDevelopmentEnvironment())
+		assert.True(t, IsCloudEnvironment())
+		assert.False(t, IsLocalEnvironment())
+	})
+
+	t.Run("Should configure with sandbox environment", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_ENVIRONMENT, ENVIRONMENT_SANDBOX))
+
+		Load()
+		assert.Equal(t, ENVIRONMENT_SANDBOX, ENVIRONMENT)
+		assert.False(t, IsProductionEnvironment())
+		assert.True(t, IsSandboxEnvironment())
+		assert.False(t, IsTestEnvironment())
+		assert.False(t, IsDevelopmentEnvironment())
+		assert.True(t, IsCloudEnvironment())
+		assert.False(t, IsLocalEnvironment())
+	})
+
+	t.Run("Should configure with test environment", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_ENVIRONMENT, ENVIRONMENT_TEST))
+
+		Load()
+		assert.Equal(t, ENVIRONMENT_TEST, ENVIRONMENT)
+		assert.False(t, IsProductionEnvironment())
+		assert.False(t, IsSandboxEnvironment())
+		assert.True(t, IsTestEnvironment())
+		assert.False(t, IsDevelopmentEnvironment())
+		assert.False(t, IsCloudEnvironment())
+		assert.True(t, IsLocalEnvironment())
+	})
+
+	t.Run("Should configure with develpoment environment", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_ENVIRONMENT, ENVIRONMENT_DEVELOPMENT))
+
+		Load()
+		assert.Equal(t, ENVIRONMENT_DEVELOPMENT, ENVIRONMENT)
+		assert.False(t, IsProductionEnvironment())
+		assert.False(t, IsSandboxEnvironment())
+		assert.False(t, IsTestEnvironment())
+		assert.True(t, IsDevelopmentEnvironment())
+		assert.False(t, IsCloudEnvironment())
+		assert.True(t, IsLocalEnvironment())
+	})
+}
+
+func TestAppName(t *testing.T) {
+	assert.NoError(t, os.Setenv(ENV_ENVIRONMENT, ENVIRONMENT_PRODUCTION))
+
 	t.Run("Should return error when app name is not configured", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_PRODUCTION)
+		assert.NoError(t, os.Setenv(ENV_APP_NAME, ""))
 
 		err := Load()
-
-		assert.Equal(t, ENVIRONMENT, ENV_PRODUCTION)
+		assert.Equal(t, ENVIRONMENT_PRODUCTION, ENVIRONMENT)
 		assert.EqualError(t, err, error_app_name_not_configured)
 	})
 
-	t.Run("Should return error when app_type is not configured", func(t *testing.T) {
-		os.Setenv("APP_NAME", app_name_value)
-		err := Load()
+	t.Run("Should return app name", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_APP_NAME, app_name_value))
 
+		Load()
+		assert.Equal(t, ENVIRONMENT_PRODUCTION, ENVIRONMENT)
+		assert.Equal(t, APP_NAME, app_name_value)
+	})
+}
+
+func TestAppType(t *testing.T) {
+	assert.NoError(t, os.Setenv(ENV_ENVIRONMENT, ENVIRONMENT_PRODUCTION))
+	assert.NoError(t, os.Setenv(ENV_APP_NAME, app_name_value))
+
+	t.Run("Should return error when enviroment is not configured", func(t *testing.T) {
+		err := Load()
+		assert.Equal(t, ENVIRONMENT_PRODUCTION, ENVIRONMENT)
+		assert.Equal(t, app_name_value, APP_NAME)
 		assert.EqualError(t, err, error_app_type_not_configured)
 	})
 
 	t.Run("Should return error when app_type contains a invalid value", func(t *testing.T) {
-		os.Setenv("APP_TYPE", invalid_value)
+		assert.NoError(t, os.Setenv(ENV_APP_TYPE, invalid_value))
 
 		err := Load()
-
-		assert.Equal(t, APP_TYPE, invalid_value)
+		assert.Equal(t, ENVIRONMENT_PRODUCTION, ENVIRONMENT)
+		assert.Equal(t, app_name_value, APP_NAME)
+		assert.Equal(t, invalid_value, APP_TYPE)
 		assert.EqualError(t, err, error_app_type_not_configured)
 	})
 
+	t.Run("Should return service app type", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_APP_TYPE, APP_TYPE_SERVICE))
+
+		Load()
+		assert.Equal(t, ENVIRONMENT_PRODUCTION, ENVIRONMENT)
+		assert.Equal(t, app_name_value, APP_NAME)
+		assert.Equal(t, APP_TYPE_SERVICE, APP_TYPE)
+	})
+
+	t.Run("Should return serverless app type", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_APP_TYPE, APP_TYPE_SERVERLESS))
+
+		Load()
+		assert.Equal(t, ENVIRONMENT_PRODUCTION, ENVIRONMENT)
+		assert.Equal(t, app_name_value, APP_NAME)
+		assert.Equal(t, APP_TYPE_SERVERLESS, APP_TYPE)
+	})
+}
+
+func TestCloud(t *testing.T) {
+	assert.NoError(t, os.Setenv(ENV_ENVIRONMENT, ENVIRONMENT_PRODUCTION))
+	assert.NoError(t, os.Setenv(ENV_APP_NAME, app_name_value))
+	assert.NoError(t, os.Setenv(ENV_APP_TYPE, APP_TYPE_SERVERLESS))
+
 	t.Run("Should return error when cloud is not configured", func(t *testing.T) {
-		os.Setenv("APP_TYPE", app_type_value)
-		err := Load()
+		assert.EqualError(t, Load(), error_cloud_not_configured)
+	})
 
+	t.Run("Should return error when enviroment contains a invalid value", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_CLOUD, invalid_value))
+
+		err := Load()
+		assert.Equal(t, invalid_value, CLOUD)
 		assert.EqualError(t, err, error_cloud_not_configured)
 	})
 
-	t.Run("Should return error when cloud contains a invalid value", func(t *testing.T) {
-		os.Setenv("CLOUD", invalid_value)
+	t.Run("Should configure with aws environment", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_CLOUD, CLOUD_AWS))
 
-		err := Load()
-
-		assert.EqualError(t, err, error_cloud_not_configured)
+		Load()
+		assert.Equal(t, CLOUD_AWS, CLOUD)
 	})
 
-	t.Run("Should return error when production environment contains required params is not configured", func(t *testing.T) {
-		os.Setenv("CLOUD", cloud_value)
+	t.Run("Should configure with azure environment", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_CLOUD, CLOUD_AZURE))
 
+		Load()
+		assert.Equal(t, CLOUD_AZURE, CLOUD)
+	})
+
+	t.Run("Should configure with gcp environment", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_CLOUD, CLOUD_GCP))
+
+		Load()
+		assert.Equal(t, CLOUD_GCP, CLOUD)
+	})
+
+	t.Run("Should configure with firebase environment", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_CLOUD, CLOUD_FIREBASE))
+
+		Load()
+		assert.Equal(t, CLOUD_FIREBASE, CLOUD)
+	})
+}
+
+func TestNewRelicKey(t *testing.T) {
+	assert.NoError(t, os.Setenv(ENV_ENVIRONMENT, ENVIRONMENT_PRODUCTION))
+	assert.NoError(t, os.Setenv(ENV_APP_NAME, app_name_value))
+	assert.NoError(t, os.Setenv(ENV_APP_TYPE, APP_TYPE_SERVERLESS))
+	assert.NoError(t, os.Setenv(ENV_CLOUD, CLOUD_FIREBASE))
+
+	t.Run("Should return error when new relic key is not configured in production environment", func(t *testing.T) {
 		err := Load()
-
 		assert.EqualError(t, err, error_production_required_params_not_configured)
 	})
 
-	t.Run("Should return error when db contains a invalid value", func(t *testing.T) {
-		os.Setenv("NEW_RELIC_LICENSE", new_relic_license_value)
-		os.Setenv("DB", invalid_value)
+	t.Run("Should return new relic key is configured in production environment", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_NEW_RELIC_LICENSE, new_relic_license_value))
 
-		err := Load()
-
-		assert.EqualError(t, err, error_database_misconfigured)
+		Load()
+		assert.Equal(t, new_relic_license_value, NEW_RELIC_LICENSE)
 	})
+}
+
+func TestServerPort(t *testing.T) {
+	loadTestEnvs(t)
+
+	t.Run("Should return default server port when environment is empty", func(t *testing.T) {
+		Load()
+		assert.Equal(t, 8080, PORT)
+	})
+
+	t.Run("Should return error when server port is wrong value", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_PORT, invalid_value))
+		assert.NotNil(t, Load())
+	})
+
+	t.Run("Should return server port when environment is not empty", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_PORT, port_value))
+
+		Load()
+		assert.Equal(t, 8081, PORT)
+	})
+}
+
+func TestDebug(t *testing.T) {
+	loadTestEnvs(t)
+
+	t.Run("Should return default debug when environment is empty", func(t *testing.T) {
+		Load()
+		assert.False(t, DEBUG)
+	})
+
+	t.Run("Should return error when debug is wrong value", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_DEBUG, invalid_value))
+		assert.NotNil(t, Load())
+	})
+
+	t.Run("Should return debug when environment is not empty", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_DEBUG, "true"))
+
+		Load()
+		assert.True(t, DEBUG)
+	})
+}
+
+func TestSqlDBMaxOpenConns(t *testing.T) {
+	loadTestEnvs(t)
+
+	t.Run("Should return default sqldb max open conns when environment is empty", func(t *testing.T) {
+		Load()
+		assert.Equal(t, 10, SQL_DB_MAX_OPEN_CONNS)
+	})
+
+	t.Run("Should return error when sqldb max open conns is wrong value", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_SQL_DB_MAX_OPEN_CONNS, invalid_value))
+		assert.NotNil(t, Load())
+	})
+
+	t.Run("Should return sqldb max open conns when environment is not empty", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_SQL_DB_MAX_OPEN_CONNS, "20"))
+
+		Load()
+		assert.Equal(t, 20, SQL_DB_MAX_OPEN_CONNS)
+	})
+}
+
+func TestSqlDBMaxIdleConns(t *testing.T) {
+	loadTestEnvs(t)
+
+	t.Run("Should return default sqldb max idle conns when environment is empty", func(t *testing.T) {
+		Load()
+		assert.Equal(t, 3, SQL_DB_MAX_IDLE_CONNS)
+	})
+
+	t.Run("Should return error when sqldb max idle conns is wrong value", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_SQL_DB_MAX_IDLE_CONNS, invalid_value))
+		assert.NotNil(t, Load())
+	})
+
+	t.Run("Should return sqldb max idle conns when environment is not empty", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_SQL_DB_MAX_IDLE_CONNS, "10"))
+
+		Load()
+		assert.Equal(t, 10, SQL_DB_MAX_IDLE_CONNS)
+	})
+}
+
+func TestSqlDBMigration(t *testing.T) {
+	loadTestEnvs(t)
+
+	t.Run("Should return default migration when environment is empty", func(t *testing.T) {
+		Load()
+		assert.False(t, SQL_DB_MIGRATION)
+	})
+
+	t.Run("Should return error when exec migration is wrong value", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_SQL_DB_MIGRATION, invalid_value))
+		assert.NotNil(t, Load())
+	})
+
+	t.Run("Should return exec migration when environment is not empty", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_SQL_DB_MIGRATION, "true"))
+
+		Load()
+		assert.True(t, SQL_DB_MIGRATION)
+	})
+}
+
+func TestCloudDisableSsl(t *testing.T) {
+	loadTestEnvs(t)
+
+	t.Run("Should return default debug when environment is empty", func(t *testing.T) {
+		Load()
+		assert.True(t, CLOUD_DISABLE_SSL)
+	})
+
+	t.Run("Should return error when debug is wrong value", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_CLOUD_DISABLE_SSL, invalid_value))
+		assert.NotNil(t, Load())
+	})
+
+	t.Run("Should return debug when environment is not empty", func(t *testing.T) {
+		assert.NoError(t, os.Setenv(ENV_CLOUD_DISABLE_SSL, "false"))
+
+		Load()
+		assert.False(t, CLOUD_DISABLE_SSL)
+	})
+}
+
+func TestGeneralEnvs(t *testing.T) {
+	loadTestEnvs(t)
 
 	t.Run("Should load configurations with success and return nil error", func(t *testing.T) {
-		os.Setenv("DB", db_value)
-		os.Setenv("CLOUD_HOST", cloud_host_value)
-		os.Setenv("CLOUD_REGION", cloud_region_value)
-		os.Setenv("CLOUD_SECRET", cloud_secret_value)
-		os.Setenv("CLOUD_TOKEN", cloud_token_value)
-		os.Setenv("CLOUD_DISABLE_SSL", cloud_disable_ssl_value)
-		os.Setenv("PORT", port_value)
-		os.Setenv("CACHE_URI", cache_uri_value)
-		os.Setenv("DB_HOST", db_host_value)
-		os.Setenv("DB_PORT", db_port_value)
-		os.Setenv("DB_USER", db_user_value)
-		os.Setenv("DB_NAME", db_name_value)
-		os.Setenv("DB_PASSWORD", db_password_value)
-		os.Setenv("DB_SSL_MODE", db_ssl_mode_value)
+		assert.NoError(t, os.Setenv(ENV_CLOUD_HOST, cloud_host_value))
+		assert.NoError(t, os.Setenv(ENV_CLOUD_REGION, cloud_region_value))
+		assert.NoError(t, os.Setenv(ENV_CLOUD_SECRET, cloud_secret_value))
+		assert.NoError(t, os.Setenv(ENV_CLOUD_TOKEN, cloud_token_value))
+		assert.NoError(t, os.Setenv(ENV_CACHE_URI, cache_uri_value))
+		assert.NoError(t, os.Setenv(ENV_CACHE_PASSWORD, cache_password_value))
+		assert.NoError(t, os.Setenv(ENV_SQL_DB_NAME, sql_db_name_value))
+		assert.NoError(t, os.Setenv(ENV_SQL_DB_HOST, sql_db_host_value))
+		assert.NoError(t, os.Setenv(ENV_SQL_DB_PORT, sql_db_port_value))
+		assert.NoError(t, os.Setenv(ENV_SQL_DB_USER, sql_db_user_value))
+		assert.NoError(t, os.Setenv(ENV_SQL_DB_PASSWORD, sql_db_password_value))
+		assert.NoError(t, os.Setenv(ENV_SQL_DB_SSL_MODE, sql_db_ssl_mode_value))
 
-		cloudDisableSsl, _ := strconv.ParseBool(cloud_disable_ssl_value)
-		serverPort, _ := strconv.Atoi(port_value)
-		dbConnectionUri := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s application_name='%s' sslmode=%s",
-			db_host_value,
-			db_port_value,
-			db_user_value,
-			db_password_value,
-			db_name_value,
+		dbConnectionUri := fmt.Sprintf(SQL_DB_CONNECTION_URI_DEFAULT,
+			sql_db_host_value,
+			sql_db_port_value,
+			sql_db_user_value,
+			sql_db_password_value,
+			sql_db_name_value,
 			app_name_value,
-			db_ssl_mode_value)
+			sql_db_ssl_mode_value)
 
-		err := Load()
-
-		assert.Equal(t, ENVIRONMENT, ENV_PRODUCTION)
-		assert.Equal(t, APP_NAME, app_name_value)
-		assert.Equal(t, APP_TYPE, APP_TYPE_SERVICE)
-		assert.Equal(t, CLOUD, cloud_value)
-		assert.Equal(t, NEW_RELIC_LICENSE, new_relic_license_value)
-		assert.Equal(t, CLOUD_HOST, cloud_host_value)
-		assert.Equal(t, CLOUD_REGION, cloud_region_value)
-		assert.Equal(t, CLOUD_SECRET, cloud_secret_value)
-		assert.Equal(t, CLOUD_TOKEN, cloud_token_value)
-		assert.Equal(t, CLOUD_DISABLE_SSL, cloudDisableSsl)
-		assert.Equal(t, PORT, serverPort)
-		assert.Equal(t, CACHE_URI, cache_uri_value)
-		assert.Equal(t, DB_CONNECTION_URI, dbConnectionUri)
-		assert.Nil(t, err)
-	})
-
-	t.Run("Wrong EXEC_MIGRATION value", func(t *testing.T) {
-		assert.NoError(t, os.Setenv("EXEC_MIGRATION", "xpto"))
-		assert.Error(t, Load())
+		assert.Nil(t, Load())
+		assert.Equal(t, cloud_host_value, CLOUD_HOST)
+		assert.Equal(t, cloud_region_value, CLOUD_REGION)
+		assert.Equal(t, cloud_secret_value, CLOUD_SECRET)
+		assert.Equal(t, cloud_token_value, CLOUD_TOKEN)
+		assert.Equal(t, cache_uri_value, CACHE_URI)
+		assert.Equal(t, cache_password_value, CACHE_PASSWORD)
+		assert.Equal(t, sql_db_name_value, SQL_DB_NAME)
+		assert.Equal(t, dbConnectionUri, SQL_DB_CONNECTION_URI)
 	})
 }
 
-func TestIsProductionEnviroment(t *testing.T) {
-	t.Run("Should return false when enviroment is not production", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_TEST)
-
-		Load()
-
-		assert.Equal(t, IsProductionEnvironment(), false)
-	})
-
-	t.Run("Should return false when enviroment is not production", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_DEVELOPMENT)
-
-		Load()
-
-		assert.Equal(t, IsProductionEnvironment(), false)
-	})
-
-	t.Run("Should return false when enviroment is not production", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_SANDBOX)
-
-		Load()
-
-		assert.Equal(t, IsProductionEnvironment(), false)
-	})
-
-	t.Run("Should return true when enviroment is production", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_PRODUCTION)
-
-		Load()
-
-		assert.Equal(t, IsProductionEnvironment(), true)
-	})
-}
-
-func TestIsSandboxEnviroment(t *testing.T) {
-	t.Run("Should return false when enviroment is not sandbox", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_PRODUCTION)
-
-		Load()
-
-		assert.Equal(t, IsSandboxEnvironment(), false)
-	})
-
-	t.Run("Should return false when enviroment is not sandbox", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_TEST)
-
-		Load()
-
-		assert.Equal(t, IsSandboxEnvironment(), false)
-	})
-
-	t.Run("Should return false when enviroment is not sandbox", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_DEVELOPMENT)
-
-		Load()
-
-		assert.Equal(t, IsSandboxEnvironment(), false)
-	})
-
-	t.Run("Should return true when enviroment is sandbox", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_SANDBOX)
-
-		Load()
-
-		assert.Equal(t, IsSandboxEnvironment(), true)
-	})
-}
-
-func TestIsDevelopmentEnviroment(t *testing.T) {
-	t.Run("Should return false when enviroment is not development", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_TEST)
-
-		Load()
-
-		assert.Equal(t, IsDevelopmentEnvironment(), false)
-	})
-
-	t.Run("Should return false when enviroment is not development", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_PRODUCTION)
-
-		Load()
-
-		assert.Equal(t, IsDevelopmentEnvironment(), false)
-	})
-
-	t.Run("Should return false when enviroment is not development", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_SANDBOX)
-
-		Load()
-
-		assert.Equal(t, IsDevelopmentEnvironment(), false)
-	})
-
-	t.Run("Should return true when enviroment is development", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_DEVELOPMENT)
-
-		Load()
-
-		assert.Equal(t, IsDevelopmentEnvironment(), true)
-	})
-}
-
-func TestIsTestEnviroment(t *testing.T) {
-	t.Run("Should return false when enviroment is not test", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_DEVELOPMENT)
-
-		Load()
-
-		assert.Equal(t, IsTestEnvironment(), false)
-	})
-
-	t.Run("Should return false when enviroment is not test", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_SANDBOX)
-
-		Load()
-
-		assert.Equal(t, IsTestEnvironment(), false)
-	})
-
-	t.Run("Should return false when enviroment is not test", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_PRODUCTION)
-
-		Load()
-
-		assert.Equal(t, IsTestEnvironment(), false)
-	})
-
-	t.Run("Should return true when enviroment is test", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_TEST)
-
-		Load()
-
-		assert.Equal(t, IsTestEnvironment(), true)
-	})
-}
-
-func TestIsCloudEnviroment(t *testing.T) {
-	t.Run("Should return false when enviroment is not cloud environment", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_DEVELOPMENT)
-
-		Load()
-
-		assert.Equal(t, IsCloudEnvironment(), false)
-	})
-
-	t.Run("Should return false when enviroment is not cloud environment", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_TEST)
-
-		Load()
-
-		assert.Equal(t, IsCloudEnvironment(), false)
-	})
-
-	t.Run("Should return true when enviroment is cloud environment", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_PRODUCTION)
-
-		Load()
-
-		assert.Equal(t, IsCloudEnvironment(), true)
-	})
-
-	t.Run("Should return true when enviroment is cloud environment", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_SANDBOX)
-
-		Load()
-
-		assert.Equal(t, IsCloudEnvironment(), true)
-	})
-}
-
-func TestIsLocalEnvironment(t *testing.T) {
-	t.Run("Should return false when enviroment is not local environment", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_PRODUCTION)
-
-		Load()
-
-		assert.Equal(t, IsLocalEnvironment(), false)
-	})
-
-	t.Run("Should return false when enviroment is not local environment", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_SANDBOX)
-
-		Load()
-
-		assert.Equal(t, IsLocalEnvironment(), false)
-	})
-
-	t.Run("Should return true when enviroment is local environment", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_DEVELOPMENT)
-
-		Load()
-
-		assert.Equal(t, IsLocalEnvironment(), true)
-	})
-
-	t.Run("Should return true when enviroment is local environment", func(t *testing.T) {
-		os.Setenv("ENVIRONMENT", ENV_TEST)
-
-		Load()
-
-		assert.Equal(t, IsLocalEnvironment(), true)
-	})
+func loadTestEnvs(t *testing.T) {
+	assert.NoError(t, os.Setenv(ENV_ENVIRONMENT, ENVIRONMENT_TEST))
+	assert.NoError(t, os.Setenv(ENV_APP_NAME, app_name_value))
+	assert.NoError(t, os.Setenv(ENV_APP_TYPE, APP_TYPE_SERVICE))
+	assert.NoError(t, os.Setenv(ENV_CLOUD, CLOUD_GCP))
 }
