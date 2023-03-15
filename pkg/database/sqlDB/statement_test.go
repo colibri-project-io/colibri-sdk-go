@@ -5,14 +5,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/test"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/test"
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestStatementWithoutInitialize(t *testing.T) {
-	basePath := test.MountAbsolutPath("../../../development-environment/database/")
+	basePath := test.MountAbsolutPath(test.DATABASE_ENVIRONMENT_PATH)
 
 	test.InitializeSqlDBTest()
 	pc := test.UsePostgresContainer()
@@ -37,7 +37,7 @@ func TestStatementWithoutInitialize(t *testing.T) {
 }
 
 func TestStatement(t *testing.T) {
-	basePath := test.MountAbsolutPath("../../../development-environment/database/")
+	basePath := test.MountAbsolutPath(test.DATABASE_ENVIRONMENT_PATH)
 
 	test.InitializeSqlDBTest()
 	pc := test.UsePostgresContainer()

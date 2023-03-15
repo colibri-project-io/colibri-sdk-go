@@ -22,7 +22,7 @@ func TestNewAuthenticationContext(t *testing.T) {
 	t.Run("Should set in context", func(t *testing.T) {
 		result := NewAuthenticationContext(defaultTenantId, defaultUserId).SetInContext(context.Background())
 		assert.NotNil(t, result)
-		assert.NotNil(t, result.Value(AuthenticationContext{}))
+		assert.NotNil(t, result.Value(contextKeyAuthenticationContext))
 	})
 
 	t.Run("Should return nil when context is nil", func(t *testing.T) {

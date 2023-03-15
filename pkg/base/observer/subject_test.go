@@ -1,9 +1,10 @@
-package gracefulshutdown
+package observer
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type observerTest struct {

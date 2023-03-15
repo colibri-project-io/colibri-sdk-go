@@ -8,12 +8,25 @@ import (
 	"time"
 )
 
+// NullBoll for empty boolean field
 type NullBool sql.NullBool
+
+// NullFloat64 for empty float field
 type NullFloat64 sql.NullFloat64
+
+// NullInt16 for empty int16 field
 type NullInt16 sql.NullInt16
+
+// NullInt32 for empty int32 field
 type NullInt32 sql.NullInt32
+
+// NullInt64 for empty int64 field
 type NullInt64 sql.NullInt64
+
+// NullString for empty string field
 type NullString sql.NullString
+
+// NullTime for empty date/time field
 type NullTime sql.NullTime
 
 func (t *NullBool) Scan(value interface{}) error {

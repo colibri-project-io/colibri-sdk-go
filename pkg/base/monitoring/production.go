@@ -3,6 +3,7 @@ package monitoring
 import (
 	"context"
 	"net/http"
+	"net/url"
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
@@ -31,15 +32,28 @@ func (m *production) wrapHandleFunc(pattern string, handler func(http.ResponseWr
 	return newrelic.WrapHandleFunc(m.Application, pattern, handler)
 }
 
-func (m *production) startTransaction(name string) (interface{}, context.Context) {
+func (m *production) startTransaction(ctx context.Context, name string) (interface{}, context.Context) {
 	transaction := m.Application.StartTransaction(name)
-	ctx := newrelic.NewContext(context.Background(), transaction)
+	nrctx := newrelic.NewContext(ctx, transaction)
 
-	return transaction, ctx
+	return transaction, nrctx
 }
 
 func (m *production) endTransaction(transaction interface{}) {
 	transaction.(*newrelic.Transaction).End()
+}
+
+func (m *production) setWebRequest(transaction interface{}, header http.Header, url *url.URL, method string) {
+	transaction.(*newrelic.Transaction).SetWebRequest(newrelic.WebRequest{
+		Header:    header,
+		URL:       url,
+		Method:    method,
+		Transport: newrelic.TransportHTTP,
+	})
+}
+
+func (m *production) setWebResponse(transaction interface{}, w http.ResponseWriter) http.ResponseWriter {
+	return transaction.(*newrelic.Transaction).SetWebResponse(w)
 }
 
 func (m *production) startTransactionSegment(transaction interface{}, name string, atributes map[string]interface{}) interface{} {

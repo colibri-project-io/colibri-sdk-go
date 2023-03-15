@@ -2,12 +2,13 @@ package colibri
 
 import (
 	"fmt"
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/graceful-shutdown"
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/cloud"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/monitoring"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/observer"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/validator"
 )
 
 const banner = `
@@ -30,7 +31,8 @@ func InitializeApp() {
 	printBanner()
 	printApplicationName()
 
-	gracefulshutdown.Initialize()
+	validator.Initialize()
+	observer.Initialize()
 	monitoring.Initialize()
 	cloud.Initialize()
 }

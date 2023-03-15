@@ -1,0 +1,21 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "POST",
+    "urlPathPattern": "/users-api/v1/users",
+    "bodyPatterns": [
+      {
+        "matchesJsonPath": {
+          "expression": "$.email",
+          "equalTo": "post_user_empty_body@error.com"
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 500,
+    "headers": {
+      "Content-Type": "application/json; charset=utf-8"
+    }
+  }
+}

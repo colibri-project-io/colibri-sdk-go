@@ -13,7 +13,7 @@ func TestInitialize(t *testing.T) {
 	})
 
 	t.Run("Should initialize AWS with local enviroment", func(t *testing.T) {
-		config.ENVIRONMENT = config.ENV_DEVELOPMENT
+		config.ENVIRONMENT = config.ENVIRONMENT_DEVELOPMENT
 		config.CLOUD = config.CLOUD_AWS
 
 		Initialize()
@@ -24,7 +24,7 @@ func TestInitialize(t *testing.T) {
 	})
 
 	t.Run("Should initialize AWS with cloud enviroment", func(t *testing.T) {
-		config.ENVIRONMENT = config.ENV_PRODUCTION
+		config.ENVIRONMENT = config.ENVIRONMENT_PRODUCTION
 		config.CLOUD = config.CLOUD_AWS
 
 		Initialize()

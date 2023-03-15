@@ -3,17 +3,18 @@ package sqlDB
 import (
 	"errors"
 	"fmt"
+	"os"
+
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"os"
 )
 
 func migrations() error {
-	if !config.EXEC_MIGRATION {
-		logging.Info("Ignoring migration because env variable EXEC_MIGRATION is set to false")
+	if !config.SQL_DB_MIGRATION {
+		logging.Info("Ignoring migration because env variable SQL_DB_MIGRATION is set to false")
 		return nil
 	}
 
@@ -32,7 +33,7 @@ func migrations() error {
 	logging.Info("Executing migrations on path: %s", sourceUrl)
 	m, _ := migrate.NewWithDatabaseInstance(
 		"file://"+sourceUrl,
-		config.DB_NAME, driver,
+		config.SQL_DB_NAME, driver,
 	)
 
 	if m != nil {

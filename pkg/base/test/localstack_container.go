@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
 	"github.com/docker/go-connections/nat"
 	"github.com/google/uuid"
@@ -80,9 +81,9 @@ func (c *LocalstackContainer) start() {
 }
 
 func (c LocalstackContainer) setEnv(port nat.Port) {
-	os.Setenv("CLOUD_HOST", fmt.Sprintf("http://localhost:%s", port.Port()))
-	os.Setenv("CLOUD_REGION", "us-east-1")
-	os.Setenv("CLOUD_SECRET", "no_secret")
-	os.Setenv("CLOUD_TOKEN", "no_token")
-	os.Setenv("CLOUD_DISABLE_SSL", "true")
+	os.Setenv(config.ENV_CLOUD_HOST, fmt.Sprintf("http://localhost:%s", port.Port()))
+	os.Setenv(config.ENV_CLOUD_REGION, "us-east-1")
+	os.Setenv(config.ENV_CLOUD_SECRET, "no_secret")
+	os.Setenv(config.ENV_CLOUD_TOKEN, "no_token")
+	os.Setenv(config.ENV_CLOUD_DISABLE_SSL, "true")
 }

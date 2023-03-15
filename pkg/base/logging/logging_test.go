@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -34,6 +35,12 @@ func TestLogging(t *testing.T) {
 		assert.Equal(t, formatExpected(INFO, text), output)
 	})
 
+	t.Run("Should log fatal", func(t *testing.T) {
+		text := "Log fatal test"
+
+		assert.PanicsWithValue(t, text, func() { Fatal(text) })
+	})
+
 	t.Run("Should log error", func(t *testing.T) {
 		text := "Log error test"
 
@@ -52,5 +59,16 @@ func TestLogging(t *testing.T) {
 		})
 
 		assert.Equal(t, formatExpected(WARN, text), output)
+	})
+
+	t.Run("Should log debug", func(t *testing.T) {
+		text := "Log debug test"
+		config.DEBUG = true
+
+		output := captureOutput(func() {
+			Debug(text)
+		})
+
+		assert.Equal(t, formatExpected(DEBUG, text), output)
 	})
 }

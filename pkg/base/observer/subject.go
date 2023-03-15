@@ -1,10 +1,11 @@
-package gracefulshutdown
+package observer
 
 import (
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
 )
 
 type subject interface {
@@ -14,12 +15,13 @@ type subject interface {
 
 var services subject
 
+// Initialize starts the subject observabilty
 func Initialize() {
 	ch := make(chan os.Signal, 1)
 	services = &service{
-		observers: make([]Observer, 0, 0),
+		observers: make([]Observer, 0),
 	}
-	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGKILL, os.Interrupt)
+	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, os.Interrupt)
 
 	go func() {
 		sig := <-ch
@@ -28,6 +30,7 @@ func Initialize() {
 	}()
 }
 
+// Attach attach the subject on services observer
 func Attach(o Observer) {
 	services.attach(o)
 }

@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
 	"github.com/docker/go-connections/nat"
 	"github.com/go-redis/redis/v8"
@@ -71,5 +72,5 @@ func (c *RedisContainer) start() {
 }
 
 func (c RedisContainer) setRedisEnv(port nat.Port) {
-	_ = os.Setenv("CACHE_URI", fmt.Sprintf("localhost:%s", port.Port()))
+	_ = os.Setenv(config.ENV_CACHE_URI, fmt.Sprintf("localhost:%s", port.Port()))
 }

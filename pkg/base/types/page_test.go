@@ -7,26 +7,56 @@ import (
 )
 
 func TestNewSort(t *testing.T) {
-	t.Run("Should return a new sort", func(t *testing.T) {
-		result := NewSort(ASC, "name")
-		assert.NotNil(t, result)
-		assert.Equal(t, ASC, result.Direction)
-		assert.Equal(t, "name", result.Field)
+
+	t.Run("NewSort", func(t *testing.T) {
+		s := NewSort(ASC, "name")
+		assert.NotNil(t, s)
+		assert.Equal(t, ASC, s.Direction)
+		assert.Equal(t, "name", s.Field)
+	})
+}
+
+func TestNewPageRequest(t *testing.T) {
+	const (
+		page uint16 = 1
+		size uint16 = 10
+	)
+
+	t.Run("Should return a new PageRequest with nil sort list", func(t *testing.T) {
+		s := NewPageRequest(page, size, nil)
+		assert.NotNil(t, s)
+		assert.Equal(t, s.Page, page)
+		assert.Equal(t, s.Size, size)
+		assert.Nil(t, s.Order)
+		assert.Equal(t, "", s.GetOrder())
 	})
 
-	t.Run("Should return a new page request", func(t *testing.T) {
-		page := uint16(1)
-		size := uint16(1)
-		sort1 := NewSort(ASC, "name")
-		sort2 := NewSort(DESC, "age")
+	t.Run("Should return a new PageRequest with empty sort list", func(t *testing.T) {
+		s := NewPageRequest(page, size, []Sort{})
+		assert.NotNil(t, s)
+		assert.Equal(t, s.Page, page)
+		assert.Equal(t, s.Size, size)
+		assert.NotNil(t, s.Order)
+		assert.Equal(t, "", s.GetOrder())
+	})
 
-		result := NewPageRequest(page, size, []Sort{sort1, sort2})
-		assert.NotNil(t, result)
-		assert.Equal(t, page, result.Page)
-		assert.Equal(t, size, result.Size)
-		assert.Len(t, result.Order, 2)
-		assert.Equal(t, sort1, result.Order[0])
-		assert.Equal(t, sort2, result.Order[1])
-		assert.Equal(t, "name ASC, age DESC", result.GetOrder())
+	t.Run("Should return a new PageRequest with one populated sort list", func(t *testing.T) {
+		sort := []Sort{NewSort(ASC, "field1")}
+		s := NewPageRequest(page, size, sort)
+		assert.NotNil(t, s)
+		assert.Equal(t, s.Page, page)
+		assert.Equal(t, s.Size, size)
+		assert.NotNil(t, s.Order)
+		assert.Equal(t, "field1 ASC", s.GetOrder())
+	})
+
+	t.Run("Should return a new PageRequest with many populated sort list", func(t *testing.T) {
+		sort := []Sort{NewSort(ASC, "field1"), NewSort(DESC, "field2")}
+		s := NewPageRequest(page, size, sort)
+		assert.NotNil(t, s)
+		assert.Equal(t, s.Page, page)
+		assert.Equal(t, s.Size, size)
+		assert.NotNil(t, s.Order)
+		assert.Equal(t, "field1 ASC, field2 DESC", s.GetOrder())
 	})
 }

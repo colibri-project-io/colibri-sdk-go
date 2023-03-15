@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -90,14 +89,14 @@ func (c *PostgresContainer) start() {
 
 	log.Printf("Test database started at port: %s", testDbPort)
 	c.setDatabaseEnv(testDbPort)
-	databaseURL := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s application_name='%s' sslmode=%s",
-		os.Getenv("DB_HOST"),
+	databaseURL := fmt.Sprintf(config.SQL_DB_CONNECTION_URI_DEFAULT,
+		os.Getenv(config.ENV_SQL_DB_HOST),
 		testDbPort.Port(),
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
+		os.Getenv(config.ENV_SQL_DB_USER),
+		os.Getenv(config.ENV_SQL_DB_PASSWORD),
+		os.Getenv(config.ENV_SQL_DB_NAME),
 		"test-app",
-		os.Getenv("DB_SSL_MODE"))
+		os.Getenv(config.ENV_SQL_DB_SSL_MODE))
 	if c.pgDB, err = sql.Open("postgres", databaseURL); err != nil {
 		logging.Fatal(err.Error())
 	}
@@ -124,7 +123,7 @@ func (c PostgresContainer) loadScript(basePath string, fileName string) (string,
 	}
 
 	filePath := fmt.Sprintf("%s%s", basePath, fileName)
-	script, err := ioutil.ReadFile(filePath)
+	script, err := os.ReadFile(filePath)
 	if err != nil {
 		return "", fmt.Errorf("could not read script file: %v", err)
 	}
@@ -141,10 +140,10 @@ func (c PostgresContainer) execScript(script string) error {
 }
 
 func (c PostgresContainer) setDatabaseEnv(testDbPort nat.Port) {
-	_ = os.Setenv("DB_HOST", testDbHost)
-	_ = os.Setenv("DB_PORT", testDbPort.Port())
-	_ = os.Setenv("DB_NAME", testDbName)
-	_ = os.Setenv("DB_USER", testDbUser)
-	_ = os.Setenv("DB_PASSWORD", testDbPassword)
-	_ = os.Setenv("DB_SSL_MODE", "disable")
+	_ = os.Setenv(config.ENV_SQL_DB_HOST, testDbHost)
+	_ = os.Setenv(config.ENV_SQL_DB_PORT, testDbPort.Port())
+	_ = os.Setenv(config.ENV_SQL_DB_NAME, testDbName)
+	_ = os.Setenv(config.ENV_SQL_DB_USER, testDbUser)
+	_ = os.Setenv(config.ENV_SQL_DB_PASSWORD, testDbPassword)
+	_ = os.Setenv(config.ENV_SQL_DB_SSL_MODE, "disable")
 }
