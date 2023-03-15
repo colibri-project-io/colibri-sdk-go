@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/transaction"
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/database/cacheDB"
 )
@@ -44,7 +45,7 @@ func (q *Query[T]) Many() ([]T, error) {
 }
 
 func (q *Query[T]) fetchMany() ([]T, error) {
-	rows, err := instance.QueryContext(q.ctx, q.query, q.args...)
+	rows, err := q.queryContext()
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +82,7 @@ func (q *Query[T]) One() (*T, error) {
 
 func (q *Query[T]) fetchOne() (*T, error) {
 	model := new(T)
-	if err := instance.QueryRowContext(q.ctx, q.query, q.args...).Scan(reflectCols(model)...); err != nil && err != sql.ErrNoRows {
+	if err := q.queryRowContext().Scan(reflectCols(model)...); err != nil && err != sql.ErrNoRows {
 		return nil, err
 	} else if err == sql.ErrNoRows {
 		return nil, nil
@@ -104,4 +105,20 @@ func (q *Query[T]) validate() error {
 	}
 
 	return nil
+}
+
+func (q *Query[T]) queryContext() (*sql.Rows, error) {
+	if tx := q.ctx.Value(transaction.SqlTxContext); tx != nil {
+		return tx.(*sql.Tx).QueryContext(q.ctx, q.query, q.args...)
+	}
+
+	return instance.QueryContext(q.ctx, q.query, q.args...)
+}
+
+func (q *Query[T]) queryRowContext() *sql.Row {
+	if tx := q.ctx.Value(transaction.SqlTxContext); tx != nil {
+		return tx.(*sql.Tx).QueryRowContext(q.ctx, q.query, q.args...)
+	}
+
+	return instance.QueryRowContext(q.ctx, q.query, q.args...)
 }

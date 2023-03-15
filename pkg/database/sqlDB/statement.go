@@ -2,7 +2,9 @@ package sqlDB
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/transaction"
 )
 
 // Statement struct
@@ -23,7 +25,7 @@ func (s *Statement) Execute() error {
 		return err
 	}
 
-	stmt, err := instance.PrepareContext(s.ctx, s.query)
+	stmt, err := s.createStatement()
 	if err != nil {
 		return err
 	}
@@ -46,4 +48,12 @@ func (s *Statement) validate() error {
 	}
 
 	return nil
+}
+
+func (s *Statement) createStatement() (*sql.Stmt, error) {
+	if tx := s.ctx.Value(transaction.SqlTxContext); tx != nil {
+		return tx.(*sql.Tx).PrepareContext(s.ctx, s.query)
+	}
+
+	return instance.PrepareContext(s.ctx, s.query)
 }
