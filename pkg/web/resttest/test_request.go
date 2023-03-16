@@ -40,6 +40,6 @@ func NewRequestTest(request *RequestTest) (ctx restserver.WebContext, response *
 	}
 
 	response = &RequestTestResponse{httptest.NewRecorder()}
-	ctx = restserver.NewGorillaWebContext(response.writer, req)
+	ctx = &testWebContext{req: req, writer: response.writer}
 	return
 }
