@@ -6,18 +6,18 @@ import (
 	"net/http/httptest"
 )
 
-// RequestTestResponse is a contract to test http requests responses
-type RequestTestResponse struct {
+// TestResponse is a contract to test http requests responses
+type TestResponse struct {
 	writer *httptest.ResponseRecorder
 }
 
 // StatusCode returns the result status code
-func (r *RequestTestResponse) StatusCode() int {
+func (r *TestResponse) StatusCode() int {
 	return r.writer.Result().StatusCode
 }
 
-// StatusCode returns the result body decoded
-func (r *RequestTestResponse) DecodeBody(object any) error {
+// DecodeBody returns the result body decoded
+func (r *TestResponse) DecodeBody(object any) error {
 	body, err := io.ReadAll(r.writer.Result().Body)
 	if err != nil {
 		return err

@@ -25,7 +25,7 @@ type RequestTest struct {
 }
 
 // NewRequestTest returns a new web context and response recorder from http tests
-func NewRequestTest(request *RequestTest) (ctx restserver.WebContext, response *RequestTestResponse) {
+func NewRequestTest(request *RequestTest) (ctx restserver.WebContext, response *TestResponse) {
 	req := httptest.NewRequest(request.Method, request.Url, bytes.NewBuffer([]byte(request.Body)))
 	req = mux.SetURLVars(req, request.UrlVars)
 
@@ -39,7 +39,7 @@ func NewRequestTest(request *RequestTest) (ctx restserver.WebContext, response *
 		req.Header.Add(key, value)
 	}
 
-	response = &RequestTestResponse{httptest.NewRecorder()}
+	response = &TestResponse{httptest.NewRecorder()}
 	ctx = &testWebContext{req: req, writer: response.writer}
 	return
 }
