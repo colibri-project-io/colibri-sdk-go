@@ -1,6 +1,7 @@
 package resttest
 
 import (
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/web/restserver"
 	"net/http"
 	"testing"
 
@@ -13,12 +14,12 @@ func TestNewRequestTest(t *testing.T) {
 		headerValue string = "Header-Test-Value"
 	)
 
-	context, writer := NewRequestTest(&RequestTest{Method: http.MethodGet, Url: "http://teste.com/url", Headers: map[string]string{headerKey: headerValue}})
-	assert.Equal(t, []string{headerValue}, context.RequestHeader(headerKey))
-	assert.NotNil(t, writer)
+	handlerFn := func(ctx restserver.WebContext) {
+		ctx.EmptyResponse(http.StatusNoContent)
+	}
 
-	authContext := context.AuthenticationContext()
-	assert.NotNil(t, authContext)
-	assert.Equal(t, authContext.GetTenantID().String(), DefaultTestTenantId)
-	assert.Equal(t, authContext.GetUserID().String(), DefaultTestUserId)
+	reqTest := &RequestTest{Method: http.MethodGet, Url: "/url", Headers: map[string]string{headerKey: headerValue}}
+	resp := NewRequestTest(reqTest, handlerFn)
+
+	assert.Equal(t, http.StatusNoContent, resp.StatusCode())
 }
