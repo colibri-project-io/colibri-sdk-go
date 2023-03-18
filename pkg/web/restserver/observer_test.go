@@ -8,7 +8,7 @@ import (
 )
 
 func TestCloseServer(t *testing.T) {
-	srv = &FiberWebServer{srv: &fiber.App{}}
+	srv = &fiberWebServer{srv: &fiber.App{}}
 
 	restObserver{}.Close()
 	assert.Nil(t, srv)

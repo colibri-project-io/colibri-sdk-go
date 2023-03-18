@@ -11,35 +11,35 @@ import (
 	"strings"
 )
 
-type FiberWebServer struct {
+type fiberWebServer struct {
 	srv *fiber.App
 }
 
 func createFiberServer() Server {
-	return &FiberWebServer{}
+	return &fiberWebServer{}
 }
 
-func (f *FiberWebServer) initialize() {
+func (f *fiberWebServer) initialize() {
 	f.srv = fiber.New()
 }
 
-func (f *FiberWebServer) shutdown() error {
+func (f *fiberWebServer) shutdown() error {
 	return f.srv.Shutdown()
 }
 
-func (f *FiberWebServer) injectMiddlewares() {
+func (f *fiberWebServer) injectMiddlewares() {
 	f.srv.Use(newRelicFiberMiddleware())
 	f.srv.Use(accessControlFiberMiddleware())
 	f.srv.Use(authenticationContextFiberMiddleware())
 }
 
-func (f *FiberWebServer) injectCustomMiddlewares() {
+func (f *fiberWebServer) injectCustomMiddlewares() {
 	for _, middleware := range customMiddlewares {
 		f.registerCustomMiddleware(middleware)
 	}
 }
 
-func (f *FiberWebServer) convertUriToFiberUri(uri string, replacer *strings.Replacer) string {
+func (f *fiberWebServer) convertUriToFiberUri(uri string, replacer *strings.Replacer) string {
 	paths := strings.Split(uri, "/")
 
 	for idx, path := range paths {
@@ -51,11 +51,11 @@ func (f *FiberWebServer) convertUriToFiberUri(uri string, replacer *strings.Repl
 	return strings.Join(paths, "/")
 }
 
-func (f *FiberWebServer) pathIsPathParam(path string) bool {
+func (f *fiberWebServer) pathIsPathParam(path string) bool {
 	return strings.Contains(path, "{")
 }
 
-func (f *FiberWebServer) injectRoutes() {
+func (f *fiberWebServer) injectRoutes() {
 	f.addMetricsRoute()
 
 	replacer := strings.NewReplacer(
@@ -69,7 +69,7 @@ func (f *FiberWebServer) injectRoutes() {
 		beforeEnter := route.BeforeEnter
 
 		f.srv.Add(route.Method, routeUri, func(ctx *fiber.Ctx) error {
-			webContext := &fiberWebContext{ctx: ctx}
+			webContext := newFiberWebContext(ctx)
 			if beforeEnter != nil {
 				if err := beforeEnter(webContext); err != nil {
 					ctx.Status(err.StatusCode)
@@ -79,8 +79,8 @@ func (f *FiberWebServer) injectRoutes() {
 
 			fn(webContext)
 
-			if webContext.IsError() {
-				return webContext.responseErr
+			if webContext.isError() {
+				return webContext.ResponseErr
 			}
 			return nil
 		})
@@ -89,7 +89,7 @@ func (f *FiberWebServer) injectRoutes() {
 	}
 }
 
-func (f *FiberWebServer) listenAndServe() error {
+func (f *fiberWebServer) listenAndServe() error {
 	defer func() {
 		if p := recover(); p != nil {
 			logging.Error("panic recovering: %v", p)
@@ -100,7 +100,7 @@ func (f *FiberWebServer) listenAndServe() error {
 	return fasthttp.ListenAndServe(addr, f.srv.Handler())
 }
 
-func (f *FiberWebServer) addMetricsRoute() {
+func (f *fiberWebServer) addMetricsRoute() {
 	const route = "/metrics"
 
 	p := fasthttpadaptor.NewFastHTTPHandler(promhttp.Handler())
@@ -112,7 +112,7 @@ func (f *FiberWebServer) addMetricsRoute() {
 	logging.Debug(fmt.Sprintf("Starting metrics on route: %s", route))
 }
 
-func (f *FiberWebServer) registerCustomMiddleware(m CustomMiddleware) {
+func (f *fiberWebServer) registerCustomMiddleware(m CustomMiddleware) {
 	fn := func(ctx *fiber.Ctx) error {
 		webCtx := &fiberWebContext{ctx: ctx}
 		if err := m.Apply(webCtx); err != nil {
