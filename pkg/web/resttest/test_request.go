@@ -1,8 +1,9 @@
-package restserver
+package resttest
 
 import (
 	"bytes"
 	"fmt"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/web/restserver"
 	"github.com/gofiber/fiber/v2"
 	"net/http/httptest"
 	"strings"
@@ -26,15 +27,15 @@ type RequestTest struct {
 }
 
 // NewRequestTest returns a TestResponse with result of test execution
-func NewRequestTest(request *RequestTest, handlerFn func(ctx WebContext)) *TestResponse {
+func NewRequestTest(request *RequestTest, handlerFn func(ctx restserver.WebContext)) *TestResponse {
 	app := fiber.New()
 	routeUri := convertUriToFiberUri(request.Url)
 	app.Add(request.Method, routeUri, func(ctx *fiber.Ctx) error {
-		webContext := newFiberWebContext(ctx)
+		webContext := restserver.NewFiberWebContext(ctx)
 
 		handlerFn(webContext)
 
-		if webContext.isError() {
+		if webContext.IsError() {
 			return webContext.ResponseErr
 		}
 		return nil
@@ -58,6 +59,7 @@ func NewRequestTest(request *RequestTest, handlerFn func(ctx WebContext)) *TestR
 
 	return &TestResponse{resp: resp}
 }
+
 func convertUriToFiberUri(uri string) string {
 
 	replacer := strings.NewReplacer(

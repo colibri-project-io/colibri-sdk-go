@@ -69,7 +69,7 @@ func (f *fiberWebServer) injectRoutes() {
 		beforeEnter := route.BeforeEnter
 
 		f.srv.Add(route.Method, routeUri, func(ctx *fiber.Ctx) error {
-			webContext := newFiberWebContext(ctx)
+			webContext := NewFiberWebContext(ctx)
 			if beforeEnter != nil {
 				if err := beforeEnter(webContext); err != nil {
 					ctx.Status(err.StatusCode)
@@ -79,7 +79,7 @@ func (f *fiberWebServer) injectRoutes() {
 
 			fn(webContext)
 
-			if webContext.isError() {
+			if webContext.IsError() {
 				return webContext.ResponseErr
 			}
 			return nil
@@ -114,7 +114,7 @@ func (f *fiberWebServer) addMetricsRoute() {
 
 func (f *fiberWebServer) registerCustomMiddleware(m CustomMiddleware) {
 	fn := func(ctx *fiber.Ctx) error {
-		webCtx := &fiberWebContext{ctx: ctx}
+		webCtx := &FiberWebContext{ctx: ctx}
 		if err := m.Apply(webCtx); err != nil {
 			ctx.Status(err.StatusCode)
 			return ctx.JSON(Error{err.Err.Error()})

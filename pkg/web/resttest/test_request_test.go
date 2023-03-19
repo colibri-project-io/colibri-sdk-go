@@ -1,6 +1,7 @@
-package restserver
+package resttest
 
 import (
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/web/restserver"
 	"net/http"
 	"testing"
 
@@ -13,7 +14,7 @@ func TestNewRequestTest(t *testing.T) {
 		headerValue string = "Header-Test-Value"
 	)
 
-	handlerFn := func(ctx WebContext) {
+	handlerFn := func(ctx restserver.WebContext) {
 		ctx.EmptyResponse(http.StatusNoContent)
 	}
 

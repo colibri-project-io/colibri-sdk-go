@@ -1,4 +1,4 @@
-package restserver
+package resttest
 
 import (
 	"encoding/json"
