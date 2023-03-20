@@ -13,28 +13,28 @@ import (
 	"strings"
 )
 
-type FiberWebContext struct {
+type fiberWebContext struct {
 	ctx         *fiber.Ctx
 	ResponseErr error
 }
 
-func NewFiberWebContext(ctx *fiber.Ctx) *FiberWebContext {
-	return &FiberWebContext{ctx: ctx}
+func newFiberWebContext(ctx *fiber.Ctx) *fiberWebContext {
+	return &fiberWebContext{ctx: ctx}
 }
 
-func (f *FiberWebContext) Context() context.Context {
+func (f *fiberWebContext) Context() context.Context {
 	return f.ctx.UserContext()
 }
 
-func (f *FiberWebContext) AuthenticationContext() *security.AuthenticationContext {
+func (f *fiberWebContext) AuthenticationContext() *security.AuthenticationContext {
 	return security.GetAuthenticationContext(f.Context())
 }
 
-func (f *FiberWebContext) RequestHeader(key string) []string {
+func (f *fiberWebContext) RequestHeader(key string) []string {
 	return []string{f.ctx.Get(key, "")}
 }
 
-func (f *FiberWebContext) RequestHeaders() map[string][]string {
+func (f *fiberWebContext) RequestHeaders() map[string][]string {
 	headers := make(map[string][]string)
 
 	f.ctx.Context().Request.Header.VisitAll(func(key, value []byte) {
@@ -44,26 +44,26 @@ func (f *FiberWebContext) RequestHeaders() map[string][]string {
 	return headers
 }
 
-func (f *FiberWebContext) PathParam(key string) string {
+func (f *fiberWebContext) PathParam(key string) string {
 	return f.ctx.Params(key)
 }
 
-func (f *FiberWebContext) QueryParam(key string) string {
+func (f *fiberWebContext) QueryParam(key string) string {
 	return f.ctx.Query(key)
 }
 
-func (f *FiberWebContext) QueryArrayParam(key string) []string {
+func (f *fiberWebContext) QueryArrayParam(key string) []string {
 	return strings.Split(f.ctx.Query(key), ",")
 }
 
-func (f *FiberWebContext) DecodeQueryParams(value any) error {
+func (f *fiberWebContext) DecodeQueryParams(value any) error {
 	if err := f.ctx.QueryParser(value); err != nil {
 		return fmt.Errorf("could not decode query params: %w", err)
 	}
 	return validator.Struct(value)
 }
 
-func (f *FiberWebContext) DecodeBody(value any) error {
+func (f *fiberWebContext) DecodeBody(value any) error {
 	body := f.ctx.Body()
 
 	if err := json.Unmarshal(body, value); err != nil {
@@ -73,58 +73,58 @@ func (f *FiberWebContext) DecodeBody(value any) error {
 	return validator.Struct(value)
 }
 
-func (f *FiberWebContext) AddHeader(key string, value string) {
+func (f *fiberWebContext) AddHeader(key string, value string) {
 	f.ctx.Response().Header.Add(key, value)
 }
 
-func (f *FiberWebContext) AddHeaders(headers map[string]string) {
+func (f *fiberWebContext) AddHeaders(headers map[string]string) {
 	for key, value := range headers {
 		f.ctx.Response().Header.Add(key, value)
 	}
 }
 
-func (f *FiberWebContext) ServeFile(path string) {
+func (f *fiberWebContext) ServeFile(path string) {
 	if err := f.ctx.SendFile(path); err != nil {
 		f.ErrorResponse(http.StatusInternalServerError, err)
 	}
 }
 
-func (f *FiberWebContext) JsonResponse(statusCode int, body any) {
+func (f *fiberWebContext) JsonResponse(statusCode int, body any) {
 	f.ctx.Response().SetStatusCode(statusCode)
 	if err := f.ctx.JSON(body); err != nil {
 		f.ErrorResponse(http.StatusInternalServerError, err)
 	}
 }
 
-func (f *FiberWebContext) ErrorResponse(statusCode int, err error) {
+func (f *fiberWebContext) ErrorResponse(statusCode int, err error) {
 	f.ResponseErr = err
 	f.ctx.Response().SetStatusCode(statusCode)
 	_ = f.ctx.JSON(Error{err.Error()})
 }
 
-func (f *FiberWebContext) EmptyResponse(statusCode int) {
+func (f *fiberWebContext) EmptyResponse(statusCode int) {
 	f.ctx.Response().SetStatusCode(statusCode)
 }
 
-func (f *FiberWebContext) IsError() bool {
+func (f *fiberWebContext) IsError() bool {
 	return f.ResponseErr != nil
 }
 
-func (f *FiberWebContext) Redirect(url string, statusCode int) {
+func (f *fiberWebContext) Redirect(url string, statusCode int) {
 	if err := f.ctx.Redirect(url, statusCode); err != nil {
 		logging.Error("Could not set set redirect %s %d: %v", url, statusCode, err)
 	}
 }
 
-func (f *FiberWebContext) StringBody() (string, error) {
+func (f *fiberWebContext) StringBody() (string, error) {
 	return string(f.ctx.Body()), nil
 }
 
-func (f *FiberWebContext) Path() string {
+func (f *fiberWebContext) Path() string {
 	return f.ctx.Path()
 }
 
-func (f *FiberWebContext) FormFile(key string) (multipart.File, *multipart.FileHeader, error) {
+func (f *fiberWebContext) FormFile(key string) (multipart.File, *multipart.FileHeader, error) {
 	fileHeader, err := f.ctx.FormFile(key)
 
 	if err != nil {

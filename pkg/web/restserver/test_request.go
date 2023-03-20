@@ -1,9 +1,8 @@
-package resttest
+package restserver
 
 import (
 	"bytes"
 	"fmt"
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/web/restserver"
 	"github.com/gofiber/fiber/v2"
 	"net/http/httptest"
 	"strings"
@@ -19,25 +18,22 @@ const (
 
 // RequestTest is a contract to test http requests
 type RequestTest struct {
-	Method string
-	Url    string
-	//UrlVars map[string]string
+	Method  string
+	Url     string
+	Path    string
 	Headers map[string]string
 	Body    string
 }
 
 // NewRequestTest returns a TestResponse with result of test execution
-func NewRequestTest(request *RequestTest, handlerFn func(ctx restserver.WebContext)) *TestResponse {
+func NewRequestTest(request *RequestTest, handlerFn func(ctx WebContext)) *TestResponse {
 	app := fiber.New()
-	routeUri := convertUriToFiberUri(request.Url)
-	app.Add(request.Method, routeUri, func(ctx *fiber.Ctx) error {
-		webContext := restserver.NewFiberWebContext(ctx)
+	path := convertUriToFiberUri(request.Path)
+	app.Add(request.Method, path, func(ctx *fiber.Ctx) error {
+		webContext := newFiberWebContext(ctx)
 
 		handlerFn(webContext)
 
-		if webContext.IsError() {
-			return webContext.ResponseErr
-		}
 		return nil
 	})
 
