@@ -11,44 +11,34 @@ import (
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/security"
 )
 
-type Consumer struct {
+type consumer struct {
 	sync.WaitGroup
-	queue  string
-	fn     func(ctx context.Context, message *ProviderMessage) error
-	done   chan interface{}
-	hasDLQ bool
+	queue string
+	fn    func(ctx context.Context, message *ProviderMessage) error
+	done  chan interface{}
 }
 
 type consumerObserver struct {
-	c *Consumer
+	c *consumer
 }
 
 func (o consumerObserver) Close() {
 	o.c.close()
 }
 
-func NewConsumerWithDLQ(queueName string, function func(ctx context.Context, message *ProviderMessage) error) {
-	newConsumer(queueName, true, function)
-}
-
-func NewConsumerWithoutDLQ(queueName string, function func(ctx context.Context, message *ProviderMessage) error) {
-	newConsumer(queueName, false, function)
-}
-
-func newConsumer(queueName string, hasDLQ bool, function func(ctx context.Context, message *ProviderMessage) error) {
-	c := &Consumer{
+func NewConsumer(qc QueueConsumer) {
+	c := &consumer{
 		WaitGroup: sync.WaitGroup{},
-		queue:     queueName,
-		fn:        function,
+		queue:     qc.QueueName(),
+		fn:        qc.Consume,
 		done:      make(chan interface{}),
-		hasDLQ:    hasDLQ,
 	}
 
 	observer.Attach(consumerObserver{c: c})
 	startListener(c)
 }
 
-func startListener(c *Consumer) {
+func startListener(c *consumer) {
 	ch := createConsumer(c)
 
 	go func() {
@@ -57,19 +47,19 @@ func startListener(c *Consumer) {
 			ctx := context.Background()
 			security.NewAuthenticationContext(msg.TenantId, msg.UserId).SetInContext(ctx)
 			if err := c.fn(ctx, msg); err != nil {
-				c.sendMessageDLQ(ctx, msg, err)
+				logging.Error("could not process message %s: %v", msg.Id, err)
 			}
 		}
 	}()
 }
 
-func createConsumer(c *Consumer) chan *ProviderMessage {
+func createConsumer(c *consumer) chan *ProviderMessage {
 	txn, ctx := monitoring.StartTransaction(context.Background(), fmt.Sprintf(messaging_consumer_transaction, c.queue))
 	defer monitoring.EndTransaction(txn)
 
 	ch, err := instance.consumer(ctx, c)
 	if err != nil {
-		logging.Error("An error occurred when trying to create a consumer to queue %s. Error: %v", c.queue, err)
+		logging.Error("An error occurred when trying to create a consumer to queue %s: %v", c.queue, err)
 		monitoring.NoticeError(txn, err)
 		return nil
 	}
@@ -77,35 +67,13 @@ func createConsumer(c *Consumer) chan *ProviderMessage {
 	return ch
 }
 
-func (c *Consumer) sendMessageDLQ(ctx context.Context, msg *ProviderMessage, err error) {
-	if !c.hasDLQ {
-		return
-	}
-	dlqQueueName := fmt.Sprintf("%s_DLQ", c.queue)
-	txn := monitoring.GetTransactionInContext(ctx)
-	if txn != nil {
-		segment := monitoring.StartTransactionSegment(txn, messaging_dlq_transaction, map[string]interface{}{
-			"queue": c.queue,
-		})
-		defer monitoring.EndTransactionSegment(segment)
-	}
-
-	logging.Error("An error occurred on processing message with id %s from queue %s. Sending to DLQ. Error: %v", msg.Id, c.queue, err)
-	monitoring.NoticeError(txn, err)
-
-	if err = instance.sendToDLQ(ctx, dlqQueueName, msg); err != nil {
-		logging.Error("Error on send message with id %s from DQL %s. Error: %v", msg.Id, dlqQueueName, err)
-		monitoring.NoticeError(txn, err)
-	}
-}
-
-func (c *Consumer) close() {
-	logging.Info("closing queue consumer %s", c.queue)
+func (c *consumer) close() {
+	logging.Info("Closing queue consumer %s", c.queue)
 	close(c.done)
 	c.Wait()
 }
 
-func (c *Consumer) isCanceled() bool {
+func (c *consumer) isCanceled() bool {
 	select {
 	case <-c.done:
 		return true

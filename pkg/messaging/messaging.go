@@ -17,8 +17,7 @@ const (
 
 type messaging interface {
 	producer(ctx context.Context, p *Producer, msg *ProviderMessage) error
-	consumer(ctx context.Context, c *Consumer) (chan *ProviderMessage, error)
-	sendToDLQ(ctx context.Context, queue string, msg *ProviderMessage) error
+	consumer(ctx context.Context, c *consumer) (chan *ProviderMessage, error)
 }
 
 var (

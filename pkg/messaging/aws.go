@@ -51,7 +51,7 @@ func (m *awsMessaging) producer(ctx context.Context, p *Producer, msg *ProviderM
 	return err
 }
 
-func (m *awsMessaging) consumer(ctx context.Context, c *Consumer) (chan *ProviderMessage, error) {
+func (m *awsMessaging) consumer(ctx context.Context, c *consumer) (chan *ProviderMessage, error) {
 	ch := make(chan *ProviderMessage, 1)
 	queueUrl := m.getQueueUrl(ctx, c.queue)
 
@@ -107,25 +107,6 @@ func (m *awsMessaging) removeMessageFromQueue(ctx context.Context, queueResult *
 	}); err != nil {
 		logging.Error("Could not delete message with id %s from queue %s. Error: %v", *msg.MessageId, *queueResult.QueueUrl, err)
 	}
-}
-
-func (m *awsMessaging) sendToDLQ(ctx context.Context, queue string, pm *ProviderMessage) error {
-	queueUrl := m.getQueueUrl(ctx, queue)
-	n := pm.n.(*sqsNotification)
-	n.Message = pm.String()
-	notificationStr, err := json.Marshal(n)
-	if err != nil {
-		return err
-	}
-
-	if _, err = m.sqsService.SendMessage(&sqs.SendMessageInput{
-		MessageBody: aws.String(string(notificationStr)),
-		QueueUrl:    queueUrl.QueueUrl,
-	}); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (m *awsMessaging) getQueueUrl(ctx context.Context, queue string) *sqs.GetQueueUrlOutput {
