@@ -31,6 +31,15 @@ func (r *TestResponse) RawBody() io.ReadCloser {
 	return r.resp.Body
 }
 
+// StringBody return a string body
+func (r *TestResponse) StringBody() (string, error) {
+	b, err := io.ReadAll(r.resp.Body)
+	if err != nil {
+		return "", err
+	}
+	return string(b), err
+}
+
 // Headers returns response headers
 func (r *TestResponse) Headers() http.Header {
 	return r.resp.Header
