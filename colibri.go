@@ -21,7 +21,7 @@ const banner = `
             project - v%s
 `
 
-var Version string = "v.0.0.0"
+var Version string = "0.0.0"
 
 func InitializeApp() {
 	if err := config.Load(); err != nil {
