@@ -9,6 +9,7 @@ import (
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 	"strings"
+	"time"
 )
 
 type fiberWebServer struct {
@@ -24,7 +25,7 @@ func (f *fiberWebServer) initialize() {
 }
 
 func (f *fiberWebServer) shutdown() error {
-	return f.srv.Shutdown()
+	return f.srv.ShutdownWithTimeout(10 * time.Second)
 }
 
 func (f *fiberWebServer) injectMiddlewares() {
@@ -79,9 +80,6 @@ func (f *fiberWebServer) injectRoutes() {
 
 			fn(webContext)
 
-			if webContext.IsError() {
-				return webContext.ResponseErr
-			}
 			return nil
 		})
 

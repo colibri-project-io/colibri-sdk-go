@@ -13,8 +13,7 @@ import (
 )
 
 type fiberWebContext struct {
-	ctx         *fiber.Ctx
-	ResponseErr error
+	ctx *fiber.Ctx
 }
 
 func newFiberWebContext(ctx *fiber.Ctx) *fiberWebContext {
@@ -101,17 +100,12 @@ func (f *fiberWebContext) JsonResponse(statusCode int, body any) {
 }
 
 func (f *fiberWebContext) ErrorResponse(statusCode int, err error) {
-	f.ResponseErr = err
 	f.ctx.Response().SetStatusCode(statusCode)
 	_ = f.ctx.JSON(Error{err.Error()})
 }
 
 func (f *fiberWebContext) EmptyResponse(statusCode int) {
 	f.ctx.Response().SetStatusCode(statusCode)
-}
-
-func (f *fiberWebContext) IsError() bool {
-	return f.ResponseErr != nil
 }
 
 func (f *fiberWebContext) Redirect(url string, statusCode int) {
