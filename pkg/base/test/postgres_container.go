@@ -140,10 +140,11 @@ func (c PostgresContainer) execScript(script string) error {
 }
 
 func (c PostgresContainer) setDatabaseEnv(testDbPort nat.Port) {
-	_ = os.Setenv(config.ENV_SQL_DB_HOST, testDbHost)
-	_ = os.Setenv(config.ENV_SQL_DB_PORT, testDbPort.Port())
-	_ = os.Setenv(config.ENV_SQL_DB_NAME, testDbName)
-	_ = os.Setenv(config.ENV_SQL_DB_USER, testDbUser)
-	_ = os.Setenv(config.ENV_SQL_DB_PASSWORD, testDbPassword)
-	_ = os.Setenv(config.ENV_SQL_DB_SSL_MODE, "disable")
+	os.Setenv(config.ENV_SQL_DB_HOST, testDbHost)
+	os.Setenv(config.ENV_SQL_DB_PORT, testDbPort.Port())
+	os.Setenv(config.ENV_SQL_DB_NAME, testDbName)
+	os.Setenv(config.ENV_SQL_DB_USER, testDbUser)
+	os.Setenv(config.ENV_SQL_DB_PASSWORD, testDbPassword)
+	os.Setenv(config.ENV_SQL_DB_SSL_MODE, "disable")
+	os.Setenv(config.ENV_SQL_DB_MIGRATION, "true")
 }
