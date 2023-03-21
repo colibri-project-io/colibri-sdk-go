@@ -33,12 +33,12 @@ func Use(m CustomMiddleware) {
 	customMiddlewares = append(customMiddlewares, m)
 }
 
-// ListenAndServe initialize, configure and expose the webrest server
+// ListenAndServe initialize, configure and expose the web rest server
 func ListenAndServe() {
 	addHealthCheckRoute()
 	addDocumentationRoute()
 
-	srv = createServer()
+	srv = createFiberServer()
 	srv.initialize()
 	srv.injectMiddlewares()
 	srv.injectCustomMiddlewares()
