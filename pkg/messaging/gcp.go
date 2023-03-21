@@ -28,7 +28,7 @@ func (m *gcpMessaging) producer(ctx context.Context, p *Producer, msg *ProviderM
 	return err
 }
 
-func (m *gcpMessaging) consumer(ctx context.Context, c *Consumer) (chan *ProviderMessage, error) {
+func (m *gcpMessaging) consumer(ctx context.Context, c *consumer) (chan *ProviderMessage, error) {
 	ch := make(chan *ProviderMessage, 1)
 	sub := m.client.Subscription(c.queue)
 	go func() {
@@ -51,10 +51,4 @@ func (m *gcpMessaging) consumer(ctx context.Context, c *Consumer) (chan *Provide
 	}()
 
 	return ch, nil
-}
-
-func (m *gcpMessaging) sendToDLQ(ctx context.Context, queue string, msg *ProviderMessage) error {
-	// Pensar melhor
-
-	return nil
 }

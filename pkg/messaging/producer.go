@@ -2,6 +2,7 @@ package messaging
 
 import (
 	"context"
+	"errors"
 	"runtime/debug"
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
@@ -19,7 +20,10 @@ func NewProducer(topicName string) *Producer {
 	return &Producer{topicName}
 }
 
-func (p *Producer) Publish(ctx context.Context, action string, message any) {
+func (p *Producer) Publish(ctx context.Context, action string, message any) error {
+	if instance == nil {
+		return errors.New("messaging has not been initialized. add in main.go `messaging.Initialize()`")
+	}
 	txn := monitoring.GetTransactionInContext(ctx)
 
 	defer func() {
@@ -52,5 +56,8 @@ func (p *Producer) Publish(ctx context.Context, action string, message any) {
 	if err := instance.producer(ctx, p, msg); err != nil {
 		logging.Error("Could not send message with id %s to topic %s. Error: %v", msg.Id, p.topic, err)
 		monitoring.NoticeError(txn, err)
+		return err
 	}
+
+	return nil
 }
