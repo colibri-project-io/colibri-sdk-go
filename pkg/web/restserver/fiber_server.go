@@ -21,7 +21,12 @@ func createFiberServer() Server {
 }
 
 func (f *fiberWebServer) initialize() {
-	f.srv = fiber.New()
+	f.srv = fiber.New(fiber.Config{
+		ReadTimeout:  1 * time.Second,
+		WriteTimeout: 1 * time.Second,
+		ServerHeader: "colibri-sdk-go",
+		AppName:      config.APP_NAME,
+	})
 }
 
 func (f *fiberWebServer) shutdown() error {
