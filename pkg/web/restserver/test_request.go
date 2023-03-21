@@ -18,11 +18,16 @@ const (
 
 // RequestTest is a contract to test http requests
 type RequestTest struct {
-	Method  string
-	Url     string
-	Path    string
+	// Method http method
+	Method string
+	// Url to call in test
+	Url string
+	// Path to register endpoint
+	Path string
+	// Request headers
 	Headers map[string]string
-	Body    string
+	// Body request
+	Body string
 }
 
 // NewRequestTest returns a TestResponse with result of test execution

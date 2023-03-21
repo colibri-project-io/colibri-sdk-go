@@ -3,7 +3,6 @@ package restserver
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/security"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/validator"
@@ -57,9 +56,16 @@ func (f *fiberWebContext) QueryArrayParam(key string) []string {
 }
 
 func (f *fiberWebContext) DecodeQueryParams(value any) error {
-	if err := f.ctx.QueryParser(value); err != nil {
-		return fmt.Errorf("could not decode query params: %w", err)
+	queryParams := make(map[string][]string)
+
+	f.ctx.Request().URI().QueryArgs().VisitAll(func(key, value []byte) {
+		queryParams[string(key)] = strings.Split(string(value), ",")
+	})
+
+	if err := validator.FormDecode(value, queryParams); err != nil {
+		return err
 	}
+
 	return validator.Struct(value)
 }
 
