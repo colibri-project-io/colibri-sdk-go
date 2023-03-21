@@ -6,7 +6,6 @@ import (
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
 	"github.com/gofiber/fiber/v2"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 	"strings"
 	"time"
@@ -22,10 +21,9 @@ func createFiberServer() Server {
 
 func (f *fiberWebServer) initialize() {
 	f.srv = fiber.New(fiber.Config{
-		ReadTimeout:  1 * time.Second,
-		WriteTimeout: 1 * time.Second,
-		ServerHeader: "colibri-sdk-go",
-		AppName:      config.APP_NAME,
+		ServerHeader:          "colibri-sdk-go",
+		AppName:               config.APP_NAME,
+		DisableStartupMessage: true,
 	})
 }
 
@@ -100,7 +98,7 @@ func (f *fiberWebServer) listenAndServe() error {
 	}()
 
 	addr := fmt.Sprintf(":%d", config.PORT)
-	return fasthttp.ListenAndServe(addr, f.srv.Handler())
+	return f.srv.Listen(addr)
 }
 
 func (f *fiberWebServer) addMetricsRoute() {
