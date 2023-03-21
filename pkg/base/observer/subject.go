@@ -15,7 +15,7 @@ type subject interface {
 
 var services subject
 
-// Initialize starts the subject observabilty
+// Initialize starts the subject observability
 func Initialize() {
 	ch := make(chan os.Signal, 1)
 	services = &service{
@@ -30,7 +30,7 @@ func Initialize() {
 	}()
 }
 
-// Attach attach the subject on services observer
+// Attach the subject on services observer
 func Attach(o Observer) {
 	services.attach(o)
 }

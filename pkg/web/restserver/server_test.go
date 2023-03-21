@@ -182,6 +182,7 @@ func TestStartRestServer(t *testing.T) {
 				var result Resp
 				if err := ctx.DecodeBody(&result); err != nil {
 					ctx.ErrorResponse(http.StatusBadRequest, err)
+					return
 				}
 				ctx.JsonResponse(http.StatusOK, result)
 			},

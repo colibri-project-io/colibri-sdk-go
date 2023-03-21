@@ -3,6 +3,7 @@ package validator
 import (
 	form "github.com/go-playground/form/v4"
 	playValidator "github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 )
 
 type Validator struct {
@@ -17,6 +18,14 @@ func Initialize() {
 		validator:   playValidator.New(),
 		formDecoder: form.NewDecoder(),
 	}
+
+	initializeUUIDCustomType()
+}
+
+func initializeUUIDCustomType() {
+	instance.formDecoder.RegisterCustomTypeFunc(func(vals []string) (interface{}, error) {
+		return uuid.Parse(vals[0])
+	}, uuid.UUID{})
 }
 
 func Struct(object any) error {
