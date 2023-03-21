@@ -27,6 +27,10 @@ func (o consumerObserver) Close() {
 }
 
 func NewConsumer(qc QueueConsumer) {
+	if instance == nil {
+		panic("messaging has not been initialized. add in main.go `messaging.Initialize()`")
+	}
+
 	c := &consumer{
 		WaitGroup: sync.WaitGroup{},
 		queue:     qc.QueueName(),
