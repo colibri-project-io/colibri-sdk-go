@@ -2,7 +2,6 @@ package messaging
 
 import (
 	"context"
-	"errors"
 	"runtime/debug"
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
@@ -26,7 +25,7 @@ func (p *Producer) Publish(ctx context.Context, action string, message any) {
 	defer func() {
 		if r := recover(); r != nil {
 			logging.Error("panic recovering publish topic %s: \n%s", p.topic, string(debug.Stack()))
-			monitoring.NoticeError(txn, errors.New(string(debug.Stack())))
+			monitoring.NoticeError(txn, r.(error))
 		}
 	}()
 
