@@ -70,9 +70,7 @@ func (f *fiberWebContext) DecodeQueryParams(value any) error {
 }
 
 func (f *fiberWebContext) DecodeBody(value any) error {
-	body := f.ctx.Body()
-
-	if err := json.Unmarshal(body, value); err != nil {
+	if err := json.Unmarshal(f.ctx.Body(), value); err != nil {
 		return err
 	}
 
