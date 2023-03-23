@@ -1,13 +1,10 @@
 package messaging
 
 import (
-	"context"
-	"fmt"
-	"testing"
-	"time"
-
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/test"
 	"github.com/stretchr/testify/assert"
+	"testing"
+	"time"
 )
 
 type userMessageTest struct {
@@ -23,19 +20,6 @@ const (
 	testFailDLQQueueName = "COLIBRI_PROJECT_FAIL_USER_CREATE_APP_CONSUMER_DLQ"
 )
 
-type queueConsumerTest struct {
-	fn    func(ctx context.Context, n *ProviderMessage) error
-	qName string
-}
-
-func (q *queueConsumerTest) Consume(ctx context.Context, pm *ProviderMessage) error {
-	return q.fn(ctx, pm)
-}
-
-func (q *queueConsumerTest) QueueName() string {
-	return q.qName
-}
-
 func TestMain(m *testing.M) {
 	test.InitializeBaseTest()
 	test.InitializeTestLocalstack()
@@ -46,52 +30,28 @@ func TestMain(m *testing.M) {
 }
 
 func TestMessagingSuccess(t *testing.T) {
-	chSuccess := make(chan string)
-	qc := queueConsumerTest{
-		fn: func(ctx context.Context, message *ProviderMessage) error {
-			chSuccess <- fmt.Sprintf("processing message: %v", message)
-			return nil
-		},
-		qName: testQueueName,
-	}
-
 	producer := NewProducer(testTopicName)
-	NewConsumer(&qc)
+	expectedMessage := "processed consumer"
+	ctx, cancel, ch := NewTestProducer(testQueueName, expectedMessage, false, 2*time.Second)
+	defer cancel()
 
 	model := userMessageTest{"User Name", "user@email.com"}
-	producer.Publish(context.Background(), "create", model)
+	assert.NoError(t, producer.Publish(ctx, "create", model))
 
-	timeout := time.After(2 * time.Second)
-	select {
-	case msgProcessing := <-chSuccess:
-		assert.NotEmpty(t, msgProcessing)
-	case <-timeout:
-		t.Fatal("Test didn't finish after 2s")
-	}
+	msg := <-ch
+	assert.Equal(t, expectedMessage, msg)
 }
 
 func TestMessagingFail(t *testing.T) {
-	chFail := make(chan string)
-	qc := queueConsumerTest{
-		fn: func(ctx context.Context, message *ProviderMessage) error {
-			err := fmt.Errorf("email not valid")
-			chFail <- err.Error()
-			return err
-		},
-		qName: testFailQueueName,
-	}
-
-	producer := NewProducer(testFailTopicName)
-	NewConsumer(&qc)
+	expectedMessage := "email not valid"
+	ctx, cancel, ch := NewTestProducer(testFailQueueName, expectedMessage, true, 2*time.Second)
+	defer cancel()
 
 	model := userMessageTest{"User Name", "user@email.com"}
-	producer.Publish(context.Background(), "create", model)
 
-	timeout := time.After(2 * time.Second)
-	select {
-	case msgDLQ := <-chFail:
-		assert.Equal(t, "email not valid", msgDLQ)
-	case <-timeout:
-		t.Fatal("Test didn't finish after 2s")
-	}
+	producer := NewProducer(testFailTopicName)
+	assert.NoError(t, producer.Publish(ctx, "create", model))
+
+	msg := <-ch
+	assert.Equal(t, expectedMessage, msg)
 }
