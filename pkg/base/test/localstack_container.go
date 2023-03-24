@@ -29,7 +29,7 @@ type LocalstackContainer struct {
 	ctx                context.Context
 }
 
-func useLocalstackContainer(ctx context.Context, configPath string) *LocalstackContainer {
+func UseLocalstackContainer(ctx context.Context, configPath string) *LocalstackContainer {
 	if localstackContainerInstance == nil {
 		localstackContainerInstance = newLocalstackContainer(ctx, configPath)
 		localstackContainerInstance.start()
