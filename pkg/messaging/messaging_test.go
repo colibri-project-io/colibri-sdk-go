@@ -37,7 +37,6 @@ func (q *queueConsumerTest) QueueName() string {
 }
 
 func TestMain(m *testing.M) {
-	test.InitializeBaseTest()
 	test.InitializeTestLocalstack()
 
 	Initialize()

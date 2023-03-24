@@ -2,11 +2,11 @@ package test
 
 import (
 	"context"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/cloud"
 	"log"
 	"os"
 	"sync"
 
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/cloud"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/monitoring"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/observer"
@@ -42,14 +42,20 @@ func InitializeSqlDBTest() {
 	loadConfig()
 }
 
-func InitializeTestLocalstack() {
+func InitializeTestLocalstack(path ...string) {
 	m.Lock()
-	basePath := MountAbsolutPath(LOCALSTACK_ENVIRONMENT_PATH)
 	ctx := context.WithValue(context.Background(), localstackID, uuid.New().String())
-	_ = UseLocalstackContainer(ctx, basePath)
+	_ = UseLocalstackContainer(ctx, getLocalstackBasePath(path...))
 	loadConfig()
 	cloud.Initialize()
 	m.Unlock()
+}
+
+func getLocalstackBasePath(path ...string) string {
+	if len(path) == 0 {
+		return MountAbsolutPath(LOCALSTACK_ENVIRONMENT_PATH)
+	}
+	return path[0]
 }
 
 func loadConfig() {

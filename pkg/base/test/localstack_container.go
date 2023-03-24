@@ -72,15 +72,15 @@ func (c *LocalstackContainer) start() {
 	if err != nil {
 		logging.Fatal(err.Error())
 	}
-	testDbPort, err := c.lsContainer.MappedPort(c.ctx, localstackSvcPort)
+	localstackPort, err := c.lsContainer.MappedPort(c.ctx, localstackSvcPort)
 	if err != nil {
 		logging.Fatal(err.Error())
 	}
-	log.Printf("Test localstack started at port: %s", testDbPort)
-	c.setEnv(testDbPort)
+	log.Printf("Test localstack started at port: %s", localstackPort)
+	c.setEnv(localstackPort)
 }
 
-func (c LocalstackContainer) setEnv(port nat.Port) {
+func (c *LocalstackContainer) setEnv(port nat.Port) {
 	os.Setenv(config.ENV_CLOUD_HOST, fmt.Sprintf("http://localhost:%s", port.Port()))
 	os.Setenv(config.ENV_CLOUD_REGION, "us-east-1")
 	os.Setenv(config.ENV_CLOUD_SECRET, "no_secret")
