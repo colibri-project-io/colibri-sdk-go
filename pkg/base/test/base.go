@@ -2,7 +2,6 @@ package test
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -45,9 +44,9 @@ func InitializeSqlDBTest() {
 
 func InitializeTestLocalstack() {
 	m.Lock()
-	basePath := MountAbsolutPath(DEVELOPMENT_ENVIRONMENT_PATH)
+	basePath := MountAbsolutPath(LOCALSTACK_ENVIRONMENT_PATH)
 	ctx := context.WithValue(context.Background(), localstackID, uuid.New().String())
-	_ = useLocalstackContainer(ctx, fmt.Sprintf("%s/%s/", basePath, "localstack"))
+	_ = UseLocalstackContainer(ctx, basePath)
 	loadConfig()
 	cloud.Initialize()
 	m.Unlock()
