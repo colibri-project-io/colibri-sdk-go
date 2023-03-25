@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/validator"
 	"github.com/google/uuid"
 )
 
@@ -22,6 +23,15 @@ func (msg *ProviderMessage) String() string {
 	message, _ := json.Marshal(msg)
 
 	return string(message)
+}
+
+// DecodeAndValidateMessage transform interface into ProviderMessage and validate the struct
+func (msg *ProviderMessage) DecodeAndValidateMessage(model interface{}) error {
+	if err := msg.DecodeMessage(model); err != nil {
+		return err
+	}
+
+	return validator.Struct(model)
 }
 
 // DecodeMessage transform interface into ProviderMessage
