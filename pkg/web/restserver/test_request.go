@@ -4,7 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"io"
+	"mime/multipart"
+	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/security"
@@ -28,6 +32,12 @@ type RequestTest struct {
 	Headers map[string]string
 	// Body request
 	Body string
+	// UploadFile file to upload in multipart form file
+	UploadFile *os.File
+	// FormFileField field name
+	FormFileField string
+	// FormFileName file name
+	FormFileName string
 }
 
 // NewRequestTest returns a TestResponse with result of test execution
@@ -42,7 +52,26 @@ func NewRequestTest(request *RequestTest, handlerFn func(ctx WebContext)) *TestR
 		return nil
 	})
 
-	req := httptest.NewRequest(request.Method, request.Url, bytes.NewBuffer([]byte(request.Body)))
+	var req *http.Request
+
+	if request.UploadFile != nil {
+		b := new(bytes.Buffer)
+		writer := multipart.NewWriter(b)
+		formFile, err := writer.CreateFormFile(request.FormFileField, request.FormFileName)
+		if err != nil {
+			panic(err)
+		}
+
+		_, _ = io.Copy(formFile, request.UploadFile)
+		if err = writer.Close(); err != nil {
+			panic(err)
+		}
+
+		req = httptest.NewRequest(request.Method, request.Url, b)
+		req.Header.Set(fiber.HeaderContentType, writer.FormDataContentType())
+	} else {
+		req = httptest.NewRequest(request.Method, request.Url, bytes.NewBuffer([]byte(request.Body)))
+	}
 
 	req.Header.Add("X-TenantId", DefaultTestTenantId)
 	req.Header.Add("X-UserId", DefaultTestUserId)
