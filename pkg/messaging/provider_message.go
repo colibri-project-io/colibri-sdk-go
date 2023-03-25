@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/validator"
 	"github.com/google/uuid"
 )
 
@@ -36,7 +37,7 @@ func (msg *ProviderMessage) DecodeMessage(model interface{}) error {
 		return err
 	}
 
-	return nil
+	return validator.Struct(model)
 }
 
 // addOriginBrokerNotification add reference of origin broker message to send dlq if an error occurs
