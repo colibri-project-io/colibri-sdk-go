@@ -25,6 +25,15 @@ func (msg *ProviderMessage) String() string {
 	return string(message)
 }
 
+// DecodeAndValidateMessage transform interface into ProviderMessage and validate the struct
+func (msg *ProviderMessage) DecodeAndValidateMessage(model interface{}) error {
+	if err := msg.DecodeMessage(model); err != nil {
+		return err
+	}
+
+	return validator.Struct(model)
+}
+
 // DecodeMessage transform interface into ProviderMessage
 func (msg *ProviderMessage) DecodeMessage(model interface{}) error {
 	buf := new(bytes.Buffer)
@@ -37,7 +46,7 @@ func (msg *ProviderMessage) DecodeMessage(model interface{}) error {
 		return err
 	}
 
-	return validator.Struct(model)
+	return nil
 }
 
 // addOriginBrokerNotification add reference of origin broker message to send dlq if an error occurs
