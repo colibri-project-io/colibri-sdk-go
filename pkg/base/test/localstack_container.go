@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	localstackDockerImage = "localstack/localstack:latest"
+	localstackDockerImage = "localstack/localstack:1.4"
 	localstackSvcPort     = "4566"
 )
 
@@ -56,7 +56,7 @@ func newLocalstackContainer(ctx context.Context, configPath string) *LocalstackC
 		),
 		WaitingFor: wait.ForAll(
 			wait.ForListeningPort(localstackSvcPort),
-			wait.ForLog("localstack topics and queues started"),
+			wait.ForLog("localstack emulator started"),
 		),
 	}
 
