@@ -190,6 +190,6 @@ func TestPostWithBodyString(t *testing.T) {
 
 func TestCreateSegmentTestEnv(t *testing.T) {
 	monitoring.Initialize()
-	seg := createSegment(nil, http.MethodPost, "/api/users")
+	seg := createSegment(context.Background(), nil, http.MethodPost, "/api/users")
 	assert.Nil(t, seg)
 }

@@ -2,20 +2,25 @@ package monitoring
 
 import (
 	"context"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
 	"net/http"
 	"net/url"
+)
 
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
+type TracingProvider string
+
+var (
+	TracingOpenTelemetry TracingProvider = "OT"
+	TracingNewRelic      TracingProvider = "NR"
 )
 
 // monitoring is a contract to implements all necessary functions
 type monitoring interface {
-	wrapHandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request)) (string, func(http.ResponseWriter, *http.Request))
 	startTransaction(ctx context.Context, name string) (interface{}, context.Context)
 	endTransaction(transaction interface{})
-	setWebRequest(transaction interface{}, header http.Header, url *url.URL, method string)
+	setWebRequest(ctx context.Context, transaction interface{}, header http.Header, url *url.URL, method string)
 	setWebResponse(transaction interface{}, w http.ResponseWriter) http.ResponseWriter
-	startTransactionSegment(transaction interface{}, name string, atributes map[string]interface{}) interface{}
+	startTransactionSegment(ctx context.Context, transaction interface{}, name string, attributes map[string]interface{}) interface{}
 	endTransactionSegment(segment interface{})
 	getTransactionInContext(ctx context.Context) interface{}
 	noticeError(transaction interface{}, err error)
@@ -25,16 +30,25 @@ var instance monitoring
 
 // Initialize loads the monitoring settings according to the configured environment.
 func Initialize() {
-	if config.IsProductionEnvironment() {
-		instance = newProduction()
+	provider := getTracingProvider()
+
+	if !config.IsProductionEnvironment() {
+		instance = newOthers()
+		return
+	}
+
+	if TracingNewRelic == provider {
+		instance = startNewRelicMonitoring()
+	} else if TracingOpenTelemetry == provider {
+		instance = startOpenTelemetryMonitoring()
 	} else {
 		instance = newOthers()
 	}
 }
 
-// WrapHandleFunc wrap the http rest handle functions.
-func WrapHandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request)) (string, func(http.ResponseWriter, *http.Request)) {
-	return instance.wrapHandleFunc(pattern, handler)
+func getTracingProvider() TracingProvider {
+	// TODO
+	return TracingNewRelic
 }
 
 // StartTransaction start a transaction in context with name
@@ -48,8 +62,8 @@ func EndTransaction(transaction interface{}) {
 }
 
 // SetWebRequest sets a web request config inside transaction
-func SetWebRequest(transaction interface{}, header http.Header, url *url.URL, method string) {
-	instance.setWebRequest(transaction, header, url, method)
+func SetWebRequest(ctx context.Context, transaction interface{}, header http.Header, url *url.URL, method string) {
+	instance.setWebRequest(ctx, transaction, header, url, method)
 }
 
 // SetWebResponse sets a web response config inside transaction
@@ -58,8 +72,8 @@ func SetWebResponse(transaction interface{}, w http.ResponseWriter) http.Respons
 }
 
 // StartTransactionSegment start a transaction segment inside opened transaction with name and atributes
-func StartTransactionSegment(transaction interface{}, name string, atributes map[string]interface{}) interface{} {
-	return instance.startTransactionSegment(transaction, name, atributes)
+func StartTransactionSegment(ctx context.Context, transaction interface{}, name string, attributes map[string]interface{}) interface{} {
+	return instance.startTransactionSegment(ctx, transaction, name, attributes)
 }
 
 // EndTransactionSegment ends the transaction segment

@@ -141,7 +141,7 @@ func callRequestWithoutBody[T ResponseBody, E ResponseErrorData](ctx context.Con
 
 	txn := monitoring.GetTransactionInContext(ctx)
 	if txn != nil {
-		segment := createSegment(txn, method, path)
+		segment := createSegment(ctx, txn, method, path)
 		defer monitoring.EndTransactionSegment(segment)
 	}
 
@@ -180,7 +180,7 @@ func callRequest[T ResponseBody, E ResponseErrorData, R RequestData](ctx context
 
 	txn := monitoring.GetTransactionInContext(ctx)
 	if txn != nil {
-		segment := createSegment(txn, method, path)
+		segment := createSegment(ctx, txn, method, path)
 		defer monitoring.EndTransactionSegment(segment)
 	}
 
@@ -219,7 +219,7 @@ func callRequestBodyString[T ResponseBody](ctx context.Context, method string, c
 
 	txn := monitoring.GetTransactionInContext(ctx)
 	if txn != nil {
-		segment := createSegment(txn, method, path)
+		segment := createSegment(ctx, txn, method, path)
 		defer monitoring.EndTransactionSegment(segment)
 	}
 
@@ -255,8 +255,8 @@ func callRequestBodyString[T ResponseBody](ctx context.Context, method string, c
 	return newResponseData(resp.StatusCode, &r, resp.Header, err)
 }
 
-func createSegment(txn interface{}, method string, path string) interface{} {
-	segment := monitoring.StartTransactionSegment(txn, restClientTransaction, map[string]any{
+func createSegment(ctx context.Context, txn interface{}, method string, path string) interface{} {
+	segment := monitoring.StartTransactionSegment(ctx, txn, restClientTransaction, map[string]any{
 		"method": method,
 		"path":   path,
 	})

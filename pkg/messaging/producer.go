@@ -34,7 +34,7 @@ func (p *Producer) Publish(ctx context.Context, action string, message any) erro
 	}()
 
 	if txn != nil {
-		segment := monitoring.StartTransactionSegment(txn, messaging_producer_transaction, map[string]any{
+		segment := monitoring.StartTransactionSegment(ctx, txn, messaging_producer_transaction, map[string]any{
 			"topic": p.topic,
 		})
 		defer monitoring.EndTransactionSegment(segment)

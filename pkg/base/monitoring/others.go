@@ -15,10 +15,6 @@ func newOthers() *others {
 	return &others{}
 }
 
-func (m *others) wrapHandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request)) (string, func(http.ResponseWriter, *http.Request)) {
-	return pattern, handler
-}
-
 func (m *others) startTransaction(ctx context.Context, name string) (interface{}, context.Context) {
 	logging.Debug("Starting transaction monitoring with name %s", name)
 	return nil, ctx
@@ -28,7 +24,7 @@ func (m *others) endTransaction(_ interface{}) {
 	logging.Debug("Ending transaction monitoring")
 }
 
-func (m *others) setWebRequest(transaction interface{}, header http.Header, url *url.URL, method string) {
+func (m *others) setWebRequest(_ context.Context, transaction interface{}, header http.Header, url *url.URL, method string) {
 	logging.Debug("Setting web request in transaction with path %s", url.Path)
 }
 
@@ -37,7 +33,7 @@ func (m *others) setWebResponse(transaction interface{}, w http.ResponseWriter) 
 	return w
 }
 
-func (m *others) startTransactionSegment(_ interface{}, name string, _ map[string]interface{}) interface{} {
+func (m *others) startTransactionSegment(_ context.Context, _ interface{}, name string, _ map[string]interface{}) interface{} {
 	logging.Debug("Starting transaction segment monitoring with name %s", name)
 	return nil
 }

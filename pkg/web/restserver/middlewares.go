@@ -79,7 +79,7 @@ func newRelicFiberMiddleware() fiber.Handler {
 		c.Context().Request.Header.VisitAll(func(key, value []byte) {
 			headers.Set(string(key), string(value))
 		})
-		monitoring.SetWebRequest(txn, headers, &url.URL{Path: c.BaseURL()}, c.Method())
+		monitoring.SetWebRequest(ctx, txn, headers, &url.URL{Path: c.BaseURL()}, c.Method())
 
 		c.SetUserContext(ctx)
 		err := c.Next()

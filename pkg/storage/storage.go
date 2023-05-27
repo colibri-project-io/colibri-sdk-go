@@ -36,7 +36,7 @@ func Initialize() {
 func UploadFile(ctx context.Context, bucket, key string, file *multipart.File) (string, error) {
 	txn := monitoring.GetTransactionInContext(ctx)
 	if txn != nil {
-		segment := monitoring.StartTransactionSegment(txn, storage_transaction, map[string]interface{}{
+		segment := monitoring.StartTransactionSegment(ctx, txn, storage_transaction, map[string]interface{}{
 			"method": "Upload",
 			"bucket": bucket,
 			"key":    key,
@@ -50,7 +50,7 @@ func UploadFile(ctx context.Context, bucket, key string, file *multipart.File) (
 func DeleteFile(ctx context.Context, bucket, key string) error {
 	txn := monitoring.GetTransactionInContext(ctx)
 	if txn != nil {
-		segment := monitoring.StartTransactionSegment(txn, storage_transaction, map[string]interface{}{
+		segment := monitoring.StartTransactionSegment(ctx, txn, storage_transaction, map[string]interface{}{
 			"method": "Delete",
 			"bucket": bucket,
 			"key":    key,

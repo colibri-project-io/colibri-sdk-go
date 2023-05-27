@@ -25,15 +25,6 @@ func TestProductionMonitoring(t *testing.T) {
 	Initialize()
 	assert.NotNil(t, instance)
 
-	t.Run("Should wrap a handle function", func(t *testing.T) {
-		newPattern, newHandler := WrapHandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-			writer.WriteHeader(200)
-		})
-
-		assert.NotNil(t, newPattern)
-		assert.NotNil(t, newHandler)
-	})
-
 	t.Run("Should get transaction in context", func(t *testing.T) {
 		txnName := "txn-test"
 
@@ -56,9 +47,9 @@ func TestProductionMonitoring(t *testing.T) {
 		var w http.ResponseWriter
 
 		transaction, ctx := StartTransaction(context.Background(), txnName)
-		SetWebRequest(transaction, http.Header{}, &url.URL{}, http.MethodGet)
+		SetWebRequest(ctx, transaction, http.Header{}, &url.URL{}, http.MethodGet)
 		SetWebResponse(transaction, w)
-		segment := StartTransactionSegment(transaction, segName, map[string]interface{}{
+		segment := StartTransactionSegment(ctx, transaction, segName, map[string]interface{}{
 			"TestKey": "TestValue",
 		})
 
@@ -93,15 +84,6 @@ func TestNonProductionMonitoring(t *testing.T) {
 	Initialize()
 	assert.NotNil(t, instance)
 
-	t.Run("Should wrap a handle function", func(t *testing.T) {
-		newPattern, newHandler := WrapHandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-			writer.WriteHeader(200)
-		})
-
-		assert.NotNil(t, newPattern)
-		assert.NotNil(t, newHandler)
-	})
-
 	t.Run("Should start transaction", func(t *testing.T) {
 		name := "txn-test"
 		text := fmt.Sprintf("Starting transaction monitoring with name %s", name)
@@ -130,7 +112,7 @@ func TestNonProductionMonitoring(t *testing.T) {
 		text := fmt.Sprintf("Starting transaction segment monitoring with name %s", name)
 
 		output := captureOutput(func() {
-			segment := StartTransactionSegment(name, name, nil)
+			segment := StartTransactionSegment(context.Background(), name, name, nil)
 			assert.Nil(t, segment)
 		})
 
