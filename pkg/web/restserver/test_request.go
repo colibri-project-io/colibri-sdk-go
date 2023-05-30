@@ -73,8 +73,8 @@ func NewRequestTest(request *RequestTest, handlerFn func(ctx WebContext)) *TestR
 		req = httptest.NewRequest(request.Method, request.Url, bytes.NewBuffer([]byte(request.Body)))
 	}
 
-	req.Header.Add("X-TenantId", DefaultTestTenantId)
-	req.Header.Add("X-UserId", DefaultTestUserId)
+	req.Header.Add(tenantIDHeader, DefaultTestTenantId)
+	req.Header.Add(userIDHeader, DefaultTestUserId)
 	for key, value := range request.Headers {
 		req.Header.Add(key, value)
 	}

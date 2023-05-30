@@ -35,18 +35,13 @@ func (s *firebaseAuthService) GetUser(ctx context.Context, id string) (*User, er
 }
 
 func (s *firebaseAuthService) CreateUser(ctx context.Context, user *UserCreate) error {
-	password, err := user.decodeBase64Password()
-	if err != nil {
-		return err
-	}
-
 	userToCreate := (&auth.UserToCreate{}).
 		UID(user.ID).
 		Email(user.Email).
-		Password(password).
+		Password(user.Password).
 		DisplayName(user.Name)
 
-	if _, err = s.client.CreateUser(ctx, userToCreate); err != nil {
+	if _, err := s.client.CreateUser(ctx, userToCreate); err != nil {
 		return err
 	}
 
@@ -55,7 +50,7 @@ func (s *firebaseAuthService) CreateUser(ctx context.Context, user *UserCreate) 
 		profileField:  user.Profile,
 		tenantIdField: user.TenantID,
 	})
-	_, err = s.client.UpdateUser(ctx, user.ID, userToSetClaims)
+	_, err := s.client.UpdateUser(ctx, user.ID, userToSetClaims)
 
 	return err
 }
@@ -67,11 +62,7 @@ func (s *firebaseAuthService) UpdateUser(ctx context.Context, id string, user *U
 	}
 
 	if user.Password != "" {
-		password, err := user.decodeBase64Password()
-		if err != nil {
-			return err
-		}
-		userToUpdate.Password(password)
+		userToUpdate.Password(user.Password)
 	}
 
 	if user.Name != "" {

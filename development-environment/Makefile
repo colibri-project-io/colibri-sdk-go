@@ -1,4 +1,4 @@
-STACK_NAME=dev
+STACK_NAME=dev-colibri-sdk-go
 
 start:
 	docker-compose -p ${STACK_NAME} up -d --remove-orphans
