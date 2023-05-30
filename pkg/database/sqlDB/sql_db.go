@@ -2,6 +2,7 @@ package sqlDB
 
 import (
 	"database/sql"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/monitoring"
 	"reflect"
 	"strings"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/observer"
-	_ "github.com/newrelic/go-agent/v3/integrations/nrpq"
 )
 
 const (
@@ -36,7 +36,7 @@ var instance *sql.DB
 
 // Initialize start connection with sql database and execute migration
 func Initialize() {
-	sqlDB, err := sql.Open(config.SQL_DB_DRIVER, config.SQL_DB_CONNECTION_URI)
+	sqlDB, err := sql.Open(monitoring.GetSQLDBDriverName(), config.SQL_DB_CONNECTION_URI)
 	if err != nil {
 		logging.Fatal(db_connection_error, err)
 	}

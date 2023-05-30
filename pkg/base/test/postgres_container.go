@@ -35,6 +35,7 @@ type PostgresContainer struct {
 	pgDB               *sql.DB
 }
 
+// UsePostgresContainer initialize postgres container for integration tests.
 func UsePostgresContainer() *PostgresContainer {
 	if postgresContainerInstance == nil {
 		postgresContainerInstance = newPostgresContainer()
@@ -55,7 +56,7 @@ func newPostgresContainer() *PostgresContainer {
 		},
 		WaitingFor: wait.ForAll(
 			wait.ForListeningPort(testPostgresSvcPort),
-			wait.ForSQL(testPostgresSvcPort, config.SQL_DB_DRIVER, func(port nat.Port) string {
+			wait.ForSQL(testPostgresSvcPort, "postgres", func(port nat.Port) string {
 				return fmt.Sprintf(
 					"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 					testDbHost,
@@ -102,7 +103,7 @@ func (c *PostgresContainer) start() {
 	}
 }
 
-func (c PostgresContainer) Dataset(basePath string, scripts ...string) error {
+func (c *PostgresContainer) Dataset(basePath string, scripts ...string) error {
 	for _, s := range scripts {
 		script, err := c.loadScript(basePath, s)
 		if err != nil {
@@ -117,7 +118,7 @@ func (c PostgresContainer) Dataset(basePath string, scripts ...string) error {
 	return nil
 }
 
-func (c PostgresContainer) loadScript(basePath string, fileName string) (string, error) {
+func (c *PostgresContainer) loadScript(basePath string, fileName string) (string, error) {
 	if !strings.HasSuffix(basePath, "/") {
 		basePath += "/"
 	}
@@ -131,7 +132,7 @@ func (c PostgresContainer) loadScript(basePath string, fileName string) (string,
 	return string(script), nil
 }
 
-func (c PostgresContainer) execScript(script string) error {
+func (c *PostgresContainer) execScript(script string) error {
 	if _, err := c.pgDB.Exec(script); err != nil {
 		return fmt.Errorf("could not execute script: %v", err)
 	}
@@ -139,12 +140,18 @@ func (c PostgresContainer) execScript(script string) error {
 	return nil
 }
 
-func (c PostgresContainer) setDatabaseEnv(testDbPort nat.Port) {
-	os.Setenv(config.ENV_SQL_DB_HOST, testDbHost)
-	os.Setenv(config.ENV_SQL_DB_PORT, testDbPort.Port())
-	os.Setenv(config.ENV_SQL_DB_NAME, testDbName)
-	os.Setenv(config.ENV_SQL_DB_USER, testDbUser)
-	os.Setenv(config.ENV_SQL_DB_PASSWORD, testDbPassword)
-	os.Setenv(config.ENV_SQL_DB_SSL_MODE, "disable")
-	os.Setenv(config.ENV_SQL_DB_MIGRATION, "true")
+func (c *PostgresContainer) setDatabaseEnv(testDbPort nat.Port) {
+	c.setEnv(config.ENV_SQL_DB_HOST, testDbHost)
+	c.setEnv(config.ENV_SQL_DB_PORT, testDbPort.Port())
+	c.setEnv(config.ENV_SQL_DB_NAME, testDbName)
+	c.setEnv(config.ENV_SQL_DB_USER, testDbUser)
+	c.setEnv(config.ENV_SQL_DB_PASSWORD, testDbPassword)
+	c.setEnv(config.ENV_SQL_DB_SSL_MODE, "disable")
+	c.setEnv(config.ENV_SQL_DB_MIGRATION, "true")
+}
+
+func (c *PostgresContainer) setEnv(env string, value string) {
+	if err := os.Setenv(env, value); err != nil {
+		logging.Fatal("could not set env[%s] value[%s]: %v", env, value, err)
+	}
 }

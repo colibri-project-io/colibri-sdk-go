@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"testing"
 	"time"
@@ -42,19 +41,17 @@ func TestProductionMonitoring(t *testing.T) {
 	})
 
 	t.Run("Should start/end transaction, start/end segment and notice error", func(t *testing.T) {
-		txnName := "txn-test"
 		segName := "txn-segment-test"
 		var w http.ResponseWriter
 
-		transaction, ctx := StartTransaction(context.Background(), txnName)
-		SetWebRequest(ctx, transaction, http.Header{}, &url.URL{}, http.MethodGet)
+		transaction, ctx := StartWebRequest(context.Background(), http.Header{}, "/", http.MethodGet)
 		SetWebResponse(transaction, w)
-		segment := StartTransactionSegment(ctx, transaction, segName, map[string]interface{}{
+		segment := StartTransactionSegment(ctx, segName, map[string]string{
 			"TestKey": "TestValue",
 		})
 
 		EndTransactionSegment(segment)
-		NoticeError(transaction, errors.New("Test notice error"))
+		NoticeError(transaction, errors.New("test notice error"))
 		EndTransaction(transaction)
 
 		assert.NotNil(t, transaction)
@@ -78,6 +75,7 @@ func TestNonProductionMonitoring(t *testing.T) {
 
 	config.APP_NAME = "colibri-project-test"
 	config.ENVIRONMENT = config.ENVIRONMENT_TEST
+	config.NEW_RELIC_LICENSE = ""
 	config.DEBUG = true
 	assert.False(t, config.IsProductionEnvironment())
 
@@ -86,7 +84,7 @@ func TestNonProductionMonitoring(t *testing.T) {
 
 	t.Run("Should start transaction", func(t *testing.T) {
 		name := "txn-test"
-		text := fmt.Sprintf("Starting transaction monitoring with name %s", name)
+		text := fmt.Sprintf("Starting transaction Monitoring with name %s", name)
 
 		output := captureOutput(func() {
 			transaction, ctx := StartTransaction(context.Background(), name)
@@ -98,7 +96,7 @@ func TestNonProductionMonitoring(t *testing.T) {
 	})
 
 	t.Run("Should end transaction", func(t *testing.T) {
-		text := "Ending transaction monitoring"
+		text := "Ending transaction Monitoring"
 
 		output := captureOutput(func() {
 			EndTransaction(text)
@@ -109,10 +107,10 @@ func TestNonProductionMonitoring(t *testing.T) {
 
 	t.Run("Should start transaction segment", func(t *testing.T) {
 		name := "txn-segment-test"
-		text := fmt.Sprintf("Starting transaction segment monitoring with name %s", name)
+		text := fmt.Sprintf("Starting transaction segment Monitoring with name %s", name)
 
 		output := captureOutput(func() {
-			segment := StartTransactionSegment(context.Background(), name, name, nil)
+			segment := StartTransactionSegment(context.Background(), name, nil)
 			assert.Nil(t, segment)
 		})
 
@@ -120,7 +118,7 @@ func TestNonProductionMonitoring(t *testing.T) {
 	})
 
 	t.Run("Should end transaction segment", func(t *testing.T) {
-		text := "Ending transaction segment monitoring"
+		text := "Ending transaction segment Monitoring"
 
 		output := captureOutput(func() {
 			EndTransactionSegment(text)

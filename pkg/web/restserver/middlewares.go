@@ -1,13 +1,11 @@
 package restserver
 
 import (
-	"fmt"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/security"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/google/uuid"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
@@ -72,14 +70,12 @@ func extractUuidFromHeader(ctx *fiber.Ctx, key string) uuid.UUID {
 
 func newRelicFiberMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		txn, ctx := monitoring.StartTransaction(c.UserContext(), fmt.Sprintf("%s %s", c.Request().Header.Method(), c.Request().URI().Path()))
-		defer monitoring.EndTransaction(txn)
-
 		headers := make(http.Header)
 		c.Context().Request.Header.VisitAll(func(key, value []byte) {
 			headers.Set(string(key), string(value))
 		})
-		monitoring.SetWebRequest(ctx, txn, headers, &url.URL{Path: c.BaseURL()}, c.Method())
+		txn, ctx := monitoring.StartWebRequest(c.UserContext(), headers, c.Path(), c.Method())
+		defer monitoring.EndTransaction(txn)
 
 		c.SetUserContext(ctx)
 		err := c.Next()

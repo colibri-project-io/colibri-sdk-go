@@ -12,11 +12,15 @@ import (
 
 const (
 	// Environments
-	ENV_ENVIRONMENT           string = "ENVIRONMENT"
-	ENV_APP_NAME              string = "APP_NAME"
-	ENV_APP_TYPE              string = "APP_TYPE"
-	ENV_CLOUD                 string = "CLOUD"
-	ENV_NEW_RELIC_LICENSE     string = "NEW_RELIC_LICENSE"
+	ENV_ENVIRONMENT string = "ENVIRONMENT"
+	ENV_APP_NAME    string = "APP_NAME"
+	ENV_APP_TYPE    string = "APP_TYPE"
+	ENV_CLOUD       string = "CLOUD"
+
+	ENV_NEW_RELIC_LICENSE           string = "NEW_RELIC_LICENSE"
+	ENV_OTEL_EXPORTER_OTLP_ENDPOINT string = "OTEL_EXPORTER_OTLP_ENDPOINT"
+	ENV_OTEL_EXPORTER_OTLP_HEADERS  string = "OTEL_EXPORTER_OTLP_HEADERS"
+
 	ENV_PORT                  string = "PORT"
 	ENV_DEBUG                 string = "DEBUG"
 	ENV_SQL_DB_MIGRATION      string = "SQL_DB_MIGRATION"
@@ -47,7 +51,6 @@ const (
 	CLOUD_AZURE                   string = "azure"
 	CLOUD_GCP                     string = "gcp"
 	CLOUD_FIREBASE                string = "firebase"
-	SQL_DB_DRIVER                 string = "nrpostgres"
 	SQL_DB_CONNECTION_URI_DEFAULT string = "host=%s port=%s user=%s password=%s dbname=%s application_name='%s' sslmode=%s"
 
 	// Errors
@@ -61,12 +64,16 @@ const (
 )
 
 var (
-	ENVIRONMENT       = ""
-	APP_NAME          = ""
-	APP_TYPE          = ""
-	NEW_RELIC_LICENSE = ""
-	DEBUG             = false
-	PORT              = 8080
+	ENVIRONMENT = ""
+	APP_NAME    = ""
+	APP_TYPE    = ""
+
+	NEW_RELIC_LICENSE           = ""
+	OTEL_EXPORTER_OTLP_ENDPOINT = ""
+	OTEL_EXPORTER_OTLP_HEADERS  = ""
+
+	DEBUG = false
+	PORT  = 8080
 
 	CLOUD             = ""
 	CLOUD_HOST        = ""
@@ -110,9 +117,8 @@ func Load() error {
 	}
 
 	NEW_RELIC_LICENSE = os.Getenv(ENV_NEW_RELIC_LICENSE)
-	if (ENVIRONMENT == ENVIRONMENT_PRODUCTION) && (NEW_RELIC_LICENSE == "") {
-		return errors.New(error_production_required_params_not_configured)
-	}
+	OTEL_EXPORTER_OTLP_ENDPOINT = os.Getenv(ENV_OTEL_EXPORTER_OTLP_ENDPOINT)
+	OTEL_EXPORTER_OTLP_HEADERS = os.Getenv(ENV_OTEL_EXPORTER_OTLP_HEADERS)
 
 	if err := convertIntEnv(&PORT, ENV_PORT); err != nil {
 		return err
