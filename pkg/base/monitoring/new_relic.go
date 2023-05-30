@@ -2,6 +2,7 @@ package monitoring
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -17,7 +18,7 @@ type newRelic struct {
 
 func startNewRelicMonitoring() monitoring {
 	app, err := newrelic.NewApplication(
-		newrelic.ConfigAppName(config.APP_NAME),
+		newrelic.ConfigAppName(fmt.Sprintf("%s-nr", config.APP_NAME)),
 		newrelic.ConfigLicense(config.NEW_RELIC_LICENSE),
 		newrelic.ConfigDistributedTracerEnabled(true),
 	)
@@ -46,6 +47,12 @@ func (m *newRelic) setWebRequest(_ context.Context, transaction interface{}, hea
 		Method:    method,
 		Transport: newrelic.TransportHTTP,
 	})
+}
+
+func (m *newRelic) startWebRequest(ctx context.Context, header http.Header, path string, method string) (interface{}, context.Context) {
+	txn, ctx := m.startTransaction(ctx, fmt.Sprintf("%s %s", method, path))
+	m.setWebRequest(ctx, txn, header, &url.URL{Path: path}, method)
+	return txn, ctx
 }
 
 func (m *newRelic) setWebResponse(transaction interface{}, w http.ResponseWriter) http.ResponseWriter {

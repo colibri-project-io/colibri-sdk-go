@@ -26,8 +26,8 @@ type openTelemetry struct {
 func newResource() *resource.Resource {
 	return resource.NewWithAttributes(
 		semconv.SchemaURL,
-		semconv.ServiceName(config.APP_NAME),
-		//semconv.ServiceVersion("0.0.1"),
+		semconv.ServiceName(fmt.Sprintf("%s-otel", config.APP_NAME)),
+		//semconv.ServiceVersion("0.0.1"), // TODO get current app version: use branch name or commit hash
 	)
 }
 
@@ -62,12 +62,17 @@ func (m *openTelemetry) endTransaction(span interface{}) {
 }
 
 func (m *openTelemetry) setWebRequest(ctx context.Context, transaction interface{}, header http.Header, url *url.URL, method string) {
+	panic("not implemented")
+}
+
+func (m *openTelemetry) startWebRequest(ctx context.Context, header http.Header, path string, method string) (interface{}, context.Context) {
 	attrs := []attribute.KeyValue{
 		semconv.HTTPMethodKey.String(method),
+		// FIXME config attributes
 		//semconv.HTTPRequestContentLengthKey.Int(c.Request().Header.ContentLength()),
 		//semconv.HTTPSchemeKey.String(utils.CopyString(c.Protocol())),
 		//semconv.HTTPTargetKey.String(string(utils.CopyBytes(c.Request().RequestURI()))),
-		semconv.HTTPURLKey.String(url.String()),
+		semconv.HTTPURLKey.String(path),
 		////semconv.HTTPUserAgentKey.String(string(utils.CopyBytes(c.Request().Header.UserAgent()))),
 		//semconv.NetHostNameKey.String(utils.CopyString(c.Hostname())),
 		semconv.NetTransportTCP,
@@ -77,11 +82,9 @@ func (m *openTelemetry) setWebRequest(ctx context.Context, transaction interface
 		trace.WithAttributes(attrs...),
 		trace.WithSpanKind(trace.SpanKindServer),
 	}
-	ctx, span := m.tracer.Start(ctx, fmt.Sprintf("%s %s", method, url.String()), opts...)
-	defer span.End()
+	ctx, span := m.tracer.Start(ctx, fmt.Sprintf("%s %s", method, path), opts...)
 
-	//TODO implement me
-	panic("implement me")
+	return span, ctx
 }
 
 func (m *openTelemetry) setWebResponse(transaction interface{}, w http.ResponseWriter) http.ResponseWriter {

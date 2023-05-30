@@ -7,18 +7,12 @@ import (
 	"net/url"
 )
 
-type TracingProvider string
-
-var (
-	TracingOpenTelemetry TracingProvider = "OT"
-	TracingNewRelic      TracingProvider = "NR"
-)
-
 // monitoring is a contract to implements all necessary functions
 type monitoring interface {
 	startTransaction(ctx context.Context, name string) (interface{}, context.Context)
 	endTransaction(transaction interface{})
 	setWebRequest(ctx context.Context, transaction interface{}, header http.Header, url *url.URL, method string)
+	startWebRequest(ctx context.Context, header http.Header, path string, method string) (interface{}, context.Context)
 	setWebResponse(transaction interface{}, w http.ResponseWriter) http.ResponseWriter
 	startTransactionSegment(ctx context.Context, transaction interface{}, name string, attributes map[string]interface{}) interface{}
 	endTransactionSegment(segment interface{})
@@ -30,25 +24,21 @@ var instance monitoring
 
 // Initialize loads the monitoring settings according to the configured environment.
 func Initialize() {
-	provider := getTracingProvider()
-
-	if !config.IsProductionEnvironment() {
-		instance = newOthers()
-		return
-	}
-
-	if TracingNewRelic == provider {
+	if useNRMonitoring() {
 		instance = startNewRelicMonitoring()
-	} else if TracingOpenTelemetry == provider {
+	} else if useOTELMonitoring() {
 		instance = startOpenTelemetryMonitoring()
 	} else {
 		instance = newOthers()
 	}
 }
 
-func getTracingProvider() TracingProvider {
-	// TODO
-	return TracingNewRelic
+func useOTELMonitoring() bool {
+	return config.OTEL_EXPORTER_OTLP_ENDPOINT != ""
+}
+
+func useNRMonitoring() bool {
+	return config.NEW_RELIC_LICENSE != ""
 }
 
 // StartTransaction start a transaction in context with name
@@ -61,12 +51,12 @@ func EndTransaction(transaction interface{}) {
 	instance.endTransaction(transaction)
 }
 
-// SetWebRequest sets a web request config inside transaction
-func SetWebRequest(ctx context.Context, transaction interface{}, header http.Header, url *url.URL, method string) {
-	instance.setWebRequest(ctx, transaction, header, url, method)
+// StartWebRequest sets a web request config inside transaction
+func StartWebRequest(ctx context.Context, header http.Header, path string, method string) (interface{}, context.Context) {
+	return instance.startWebRequest(ctx, header, path, method)
 }
 
-// SetWebResponse sets a web response config inside transaction
+// SetWebResponse sets a web response config inside transaction TODO Is this still used?
 func SetWebResponse(transaction interface{}, w http.ResponseWriter) http.ResponseWriter {
 	return instance.setWebResponse(transaction, w)
 }

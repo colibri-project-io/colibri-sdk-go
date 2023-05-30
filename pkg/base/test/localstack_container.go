@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	localstackDockerImage = "localstack/localstack:latest"
+	localstackDockerImage = "localstack/localstack:1.4"
 	localstackSvcPort     = "4566"
 )
 

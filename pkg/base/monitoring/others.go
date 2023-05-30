@@ -28,6 +28,11 @@ func (m *others) setWebRequest(_ context.Context, transaction interface{}, heade
 	logging.Debug("Setting web request in transaction with path %s", url.Path)
 }
 
+func (m *others) startWebRequest(ctx context.Context, header http.Header, path string, method string) (interface{}, context.Context) {
+	logging.Debug("Start web request in transaction with path %s", path)
+	return nil, ctx
+}
+
 func (m *others) setWebResponse(transaction interface{}, w http.ResponseWriter) http.ResponseWriter {
 	logging.Debug("Setting web response in transaction")
 	return w

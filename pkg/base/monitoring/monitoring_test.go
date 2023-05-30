@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"testing"
 	"time"
@@ -42,12 +41,10 @@ func TestProductionMonitoring(t *testing.T) {
 	})
 
 	t.Run("Should start/end transaction, start/end segment and notice error", func(t *testing.T) {
-		txnName := "txn-test"
 		segName := "txn-segment-test"
 		var w http.ResponseWriter
 
-		transaction, ctx := StartTransaction(context.Background(), txnName)
-		SetWebRequest(ctx, transaction, http.Header{}, &url.URL{}, http.MethodGet)
+		transaction, ctx := StartWebRequest(context.Background(), http.Header{}, "/", http.MethodGet)
 		SetWebResponse(transaction, w)
 		segment := StartTransactionSegment(ctx, transaction, segName, map[string]interface{}{
 			"TestKey": "TestValue",
@@ -78,6 +75,7 @@ func TestNonProductionMonitoring(t *testing.T) {
 
 	config.APP_NAME = "colibri-project-test"
 	config.ENVIRONMENT = config.ENVIRONMENT_TEST
+	config.NEW_RELIC_LICENSE = ""
 	config.DEBUG = true
 	assert.False(t, config.IsProductionEnvironment())
 
