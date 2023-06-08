@@ -22,7 +22,7 @@ type MonitoringNewRelic struct {
 
 func StartNewRelicMonitoring() colibri_monitoring_base.Monitoring {
 	app, err := newrelic.NewApplication(
-		newrelic.ConfigAppName(fmt.Sprintf("%s-nr", config.APP_NAME)),
+		newrelic.ConfigAppName(config.APP_NAME),
 		newrelic.ConfigLicense(config.NEW_RELIC_LICENSE),
 		newrelic.ConfigDistributedTracerEnabled(true),
 	)
@@ -44,7 +44,7 @@ func (m *MonitoringNewRelic) EndTransaction(transaction interface{}) {
 	transaction.(*newrelic.Transaction).End()
 }
 
-func (m *MonitoringNewRelic) SetWebRequest(_ context.Context, transaction interface{}, header http.Header, url *url.URL, method string) {
+func (m *MonitoringNewRelic) setWebRequest(transaction interface{}, header http.Header, url *url.URL, method string) {
 	transaction.(*newrelic.Transaction).SetWebRequest(newrelic.WebRequest{
 		Header:    header,
 		URL:       url,
@@ -55,7 +55,7 @@ func (m *MonitoringNewRelic) SetWebRequest(_ context.Context, transaction interf
 
 func (m *MonitoringNewRelic) StartWebRequest(ctx context.Context, header http.Header, path string, method string) (interface{}, context.Context) {
 	txn, ctx := m.StartTransaction(ctx, fmt.Sprintf("%s %s", method, path))
-	m.SetWebRequest(ctx, txn, header, &url.URL{Path: path}, method)
+	m.setWebRequest(txn, header, &url.URL{Path: path}, method)
 
 	return txn, ctx
 }

@@ -45,11 +45,6 @@ func StartWebRequest(ctx context.Context, header http.Header, path string, metho
 	return instance.StartWebRequest(ctx, header, path, method)
 }
 
-// SetWebResponse sets a web response config inside transaction TODO Is this still used?
-func SetWebResponse(transaction interface{}, w http.ResponseWriter) http.ResponseWriter {
-	return instance.SetWebResponse(transaction, w)
-}
-
 // StartTransactionSegment start a transaction segment inside opened transaction with name and atributes
 func StartTransactionSegment(ctx context.Context, name string, attributes map[string]string) interface{} {
 	return instance.StartTransactionSegment(ctx, name, attributes)

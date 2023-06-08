@@ -18,7 +18,6 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
 	"go.opentelemetry.io/otel/trace"
 	"net/http"
-	"net/url"
 	"os"
 )
 
@@ -30,8 +29,8 @@ type MonitoringOpenTelemetry struct {
 func newResource() *resource.Resource {
 	return resource.NewWithAttributes(
 		semconv.SchemaURL,
-		semconv.ServiceName(fmt.Sprintf("%s-otel", config.APP_NAME)),
-		//semconv.ServiceVersion("0.0.1"), // TODO get current app version: use branch name or commit hash
+		semconv.ServiceName(config.APP_NAME),
+		semconv.ServiceVersion(config.APP_VERSION),
 	)
 }
 
@@ -65,20 +64,15 @@ func (m *MonitoringOpenTelemetry) EndTransaction(span interface{}) {
 	span.(trace.Span).End()
 }
 
-func (m *MonitoringOpenTelemetry) SetWebRequest(ctx context.Context, transaction interface{}, header http.Header, url *url.URL, method string) {
-	panic("not implemented")
-}
-
 func (m *MonitoringOpenTelemetry) StartWebRequest(ctx context.Context, header http.Header, path string, method string) (interface{}, context.Context) {
 	attrs := []attribute.KeyValue{
 		semconv.HTTPMethodKey.String(method),
-		// FIXME config attributes
-		//semconv.HTTPRequestContentLengthKey.Int(c.Request().Header.ContentLength()),
-		//semconv.HTTPSchemeKey.String(utils.CopyString(c.Protocol())),
-		//semconv.HTTPTargetKey.String(string(utils.CopyBytes(c.Request().RequestURI()))),
+		semconv.HTTPRequestContentLengthKey.String(header.Get("Content-Length")),
+		semconv.HTTPSchemeKey.String(header.Get("X-Protocol")),
+		semconv.HTTPTargetKey.String(header.Get("X-Request-URI")),
 		semconv.HTTPURLKey.String(path),
-		////semconv.HTTPUserAgentKey.String(string(utils.CopyBytes(c.Request().Header.UserAgent()))),
-		//semconv.NetHostNameKey.String(utils.CopyString(c.Hostname())),
+		semconv.UserAgentOriginal(header.Get("User-Agent")),
+		semconv.NetHostNameKey.String(header.Get("Host")),
 		semconv.NetTransportTCP,
 	}
 
@@ -89,11 +83,6 @@ func (m *MonitoringOpenTelemetry) StartWebRequest(ctx context.Context, header ht
 	ctx, span := m.tracer.Start(ctx, fmt.Sprintf("%s %s", method, path), opts...)
 
 	return span, ctx
-}
-
-func (m *MonitoringOpenTelemetry) SetWebResponse(transaction interface{}, w http.ResponseWriter) http.ResponseWriter {
-	//TODO is this still necessary?
-	panic("implement me")
 }
 
 func (m *MonitoringOpenTelemetry) StartTransactionSegment(ctx context.Context, name string, attributes map[string]string) interface{} {

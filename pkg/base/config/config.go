@@ -3,11 +3,10 @@ package config
 import (
 	"errors"
 	"fmt"
-	"os"
-	"strconv"
-
 	"github.com/joho/godotenv"
 	"golang.org/x/exp/slices"
+	"os"
+	"strconv"
 )
 
 const (
@@ -59,14 +58,15 @@ const (
 	error_app_type_not_configured                   string = "app type is not configured. Set service or serverless"
 	error_cloud_not_configured                      string = "cloud is not configured. Set aws, azure, gcp or firebase"
 	error_production_required_params_not_configured string = "production required params not configured. Set NEW_RELIC_LICENSE"
-	error_integer_parse                             string = "could not parse %s, permited int value, got %v: %w"
-	error_boolean_parse                             string = "could not parse %s, permited 'true' or 'false', got %v: %w"
+	error_integer_parse                             string = "could not parse %s, permitted int value, got %v: %w"
+	error_boolean_parse                             string = "could not parse %s, permitted 'true' or 'false', got %v: %w"
 )
 
 var (
 	ENVIRONMENT = ""
 	APP_NAME    = ""
 	APP_TYPE    = ""
+	APP_VERSION = ""
 
 	NEW_RELIC_LICENSE           = ""
 	OTEL_EXPORTER_OTLP_ENDPOINT = ""

@@ -42,10 +42,8 @@ func TestProductionMonitoring(t *testing.T) {
 
 	t.Run("Should start/end transaction, start/end segment and notice error", func(t *testing.T) {
 		segName := "txn-segment-test"
-		var w http.ResponseWriter
 
 		transaction, ctx := StartWebRequest(context.Background(), http.Header{}, "/", http.MethodGet)
-		SetWebResponse(transaction, w)
 		segment := StartTransactionSegment(ctx, segName, map[string]string{
 			"TestKey": "TestValue",
 		})

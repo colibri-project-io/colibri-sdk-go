@@ -10,7 +10,6 @@ type Monitoring interface {
 	StartTransaction(ctx context.Context, name string) (interface{}, context.Context)
 	EndTransaction(transaction interface{})
 	StartWebRequest(ctx context.Context, header http.Header, path string, method string) (interface{}, context.Context)
-	SetWebResponse(transaction interface{}, w http.ResponseWriter) http.ResponseWriter
 	StartTransactionSegment(ctx context.Context, name string, attributes map[string]string) interface{}
 	EndTransactionSegment(segment interface{})
 	GetTransactionInContext(ctx context.Context) interface{}

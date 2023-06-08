@@ -2,10 +2,8 @@ package colibri_monitoring_base
 
 import (
 	"context"
-	"net/http"
-	"net/url"
-
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
+	"net/http"
 )
 
 type others struct {
@@ -24,18 +22,9 @@ func (m *others) EndTransaction(_ interface{}) {
 	logging.Debug("Ending transaction Monitoring")
 }
 
-func (m *others) SetWebRequest(_ context.Context, transaction interface{}, header http.Header, url *url.URL, method string) {
-	logging.Debug("Setting web request in transaction with path %s", url.Path)
-}
-
-func (m *others) StartWebRequest(ctx context.Context, header http.Header, path string, method string) (interface{}, context.Context) {
+func (m *others) StartWebRequest(ctx context.Context, _ http.Header, path string, _ string) (interface{}, context.Context) {
 	logging.Debug("Start web request in transaction with path %s", path)
 	return nil, ctx
-}
-
-func (m *others) SetWebResponse(transaction interface{}, w http.ResponseWriter) http.ResponseWriter {
-	logging.Debug("Setting web response in transaction")
-	return w
 }
 
 func (m *others) StartTransactionSegment(_ context.Context, name string, _ map[string]string) interface{} {

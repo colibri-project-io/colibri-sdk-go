@@ -74,6 +74,8 @@ func newRelicFiberMiddleware() fiber.Handler {
 		c.Context().Request.Header.VisitAll(func(key, value []byte) {
 			headers.Set(string(key), string(value))
 		})
+		headers.Set("X-Request-URI", string(c.Request().RequestURI()))
+		headers.Set("X-Protocol", c.Protocol())
 		txn, ctx := monitoring.StartWebRequest(c.UserContext(), headers, c.Path(), c.Method())
 		defer monitoring.EndTransaction(txn)
 
