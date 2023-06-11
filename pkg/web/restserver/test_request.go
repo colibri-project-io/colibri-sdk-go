@@ -3,7 +3,6 @@ package restserver
 import (
 	"bytes"
 	"fmt"
-	"github.com/gofiber/fiber/v2"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -11,8 +10,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/security"
-	"github.com/google/uuid"
+	"github.com/gofiber/fiber/v2"
 )
 
 const (
@@ -43,6 +41,8 @@ type RequestTest struct {
 // NewRequestTest returns a TestResponse with result of test execution
 func NewRequestTest(request *RequestTest, handlerFn func(ctx WebContext)) *TestResponse {
 	app := fiber.New()
+	app.Use(authenticationContextFiberMiddleware())
+
 	path := convertUriToFiberUri(request.Path)
 	app.Add(request.Method, path, func(ctx *fiber.Ctx) error {
 		webContext := newFiberWebContext(ctx)
@@ -73,11 +73,8 @@ func NewRequestTest(request *RequestTest, handlerFn func(ctx WebContext)) *TestR
 		req = httptest.NewRequest(request.Method, request.Url, bytes.NewBuffer([]byte(request.Body)))
 	}
 
-	req.Header.Add("X-TenantId", DefaultTestTenantId)
-	req.Header.Add("X-UserId", DefaultTestUserId)
-	req = req.WithContext(security.NewAuthenticationContext(uuid.MustParse(DefaultTestTenantId), uuid.MustParse(DefaultTestUserId)).
-		SetInContext(req.Context()))
-
+	req.Header.Add(tenantIDHeader, DefaultTestTenantId)
+	req.Header.Add(userIDHeader, DefaultTestUserId)
 	for key, value := range request.Headers {
 		req.Header.Add(key, value)
 	}
@@ -91,14 +88,12 @@ func NewRequestTest(request *RequestTest, handlerFn func(ctx WebContext)) *TestR
 }
 
 func convertUriToFiberUri(uri string) string {
-
 	replacer := strings.NewReplacer(
 		"{", "",
 		"}", "",
 	)
 
 	paths := strings.Split(uri, "/")
-
 	for idx, path := range paths {
 		if pathIsPathParam(path) {
 			paths[idx] = fmt.Sprintf(":%s", replacer.Replace(path))

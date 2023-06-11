@@ -16,4 +16,4 @@ awslocal sns subscribe --topic-arn arn:aws:sns:us-east-1:000000000000:COLIBRI_PR
 
 awslocal s3api create-bucket --bucket my-bucket --acl public-read
 
-echo "localstack topics and queues started"
+echo "localstack emulator started"
