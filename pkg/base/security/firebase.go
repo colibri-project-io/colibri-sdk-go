@@ -46,7 +46,7 @@ func (s *firebaseAuthService) CreateUser(ctx context.Context, user *UserCreate) 
 	}
 
 	userToSetClaims := &auth.UserToUpdate{}
-	userToSetClaims.CustomClaims(map[string]interface{}{
+	userToSetClaims.CustomClaims(map[string]any{
 		profileField:  user.Profile,
 		tenantIdField: user.TenantID,
 	})
@@ -69,9 +69,10 @@ func (s *firebaseAuthService) UpdateUser(ctx context.Context, id string, user *U
 		userToUpdate.DisplayName(user.Name)
 	}
 
-	if user.Profile != "" {
-		userToUpdate.CustomClaims(map[string]interface{}{profileField: user.Profile})
-	}
+	userToUpdate.CustomClaims(map[string]any{
+		profileField:  user.Profile,
+		tenantIdField: user.TenantID,
+	})
 
 	_, err := s.client.UpdateUser(ctx, id, userToUpdate)
 	return err
