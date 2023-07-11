@@ -26,5 +26,6 @@ type UserUpdate struct {
 	Email    string
 	Password string
 	Name     string
+	TenantID string
 	Profile  string
 }
