@@ -23,11 +23,17 @@ type NullInt32 sql.NullInt32
 // NullInt64 for empty int64 field
 type NullInt64 sql.NullInt64
 
+// NullIsoDate for empty date field
+type NullIsoDate sql.NullTime
+
+// NullIsoTime for empty time field
+type NullIsoTime sql.NullTime
+
 // NullString for empty string field
 type NullString sql.NullString
 
-// NullTime for empty date/time field
-type NullTime sql.NullTime
+// NullDateTime for empty date/time field
+type NullDateTime sql.NullTime
 
 func (t *NullBool) Scan(value interface{}) error {
 	var i sql.NullBool
@@ -264,6 +270,108 @@ func (t *NullInt64) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (t *NullIsoDate) Scan(value interface{}) error {
+	var i sql.NullTime
+	if err := i.Scan(value); err != nil {
+		return err
+	}
+
+	if reflect.TypeOf(value) == nil {
+		*t = NullIsoDate{i.Time, false}
+	} else {
+		*t = NullIsoDate{i.Time, true}
+	}
+
+	return nil
+}
+
+func (t NullIsoDate) Value() (driver.Value, error) {
+	if !t.Valid {
+		return nil, nil
+	}
+
+	return t.Time, nil
+}
+
+func (t NullIsoDate) MarshalJSON() ([]byte, error) {
+	if !t.Valid {
+		return json.Marshal(nil)
+	}
+
+	return json.Marshal(t.Time.Format(time.DateOnly))
+}
+
+func (t *NullIsoDate) UnmarshalJSON(data []byte) error {
+	var ptr *string
+	if err := json.Unmarshal(data, &ptr); err != nil {
+		return err
+	}
+
+	if ptr == nil {
+		t.Valid = false
+		return nil
+	}
+
+	parsedDate, err := time.Parse(time.DateOnly, *ptr)
+	if err != nil {
+		return err
+	}
+
+	t.Time, t.Valid = parsedDate, true
+	return nil
+}
+
+func (t *NullIsoTime) Scan(value interface{}) error {
+	var i sql.NullTime
+	if err := i.Scan(value); err != nil {
+		return err
+	}
+
+	if reflect.TypeOf(value) == nil {
+		*t = NullIsoTime{i.Time, false}
+	} else {
+		*t = NullIsoTime{i.Time, true}
+	}
+
+	return nil
+}
+
+func (t NullIsoTime) Value() (driver.Value, error) {
+	if !t.Valid {
+		return nil, nil
+	}
+
+	return t.Time, nil
+}
+
+func (t NullIsoTime) MarshalJSON() ([]byte, error) {
+	if !t.Valid {
+		return json.Marshal(nil)
+	}
+
+	return json.Marshal(t.Time.Format(time.TimeOnly))
+}
+
+func (t *NullIsoTime) UnmarshalJSON(data []byte) error {
+	var ptr *string
+	if err := json.Unmarshal(data, &ptr); err != nil {
+		return err
+	}
+
+	if ptr == nil {
+		t.Valid = false
+		return nil
+	}
+
+	parsedTime, err := time.Parse(time.TimeOnly, *ptr)
+	if err != nil {
+		return err
+	}
+
+	t.Time, t.Valid = parsedTime, true
+	return nil
+}
+
 func (t *NullString) Scan(value interface{}) error {
 	var i sql.NullString
 	if err := i.Scan(value); err != nil {
@@ -311,22 +419,22 @@ func (t *NullString) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (t *NullTime) Scan(value interface{}) error {
+func (t *NullDateTime) Scan(value interface{}) error {
 	var i sql.NullTime
 	if err := i.Scan(value); err != nil {
 		return err
 	}
 
 	if reflect.TypeOf(value) == nil {
-		*t = NullTime{i.Time, false}
+		*t = NullDateTime{i.Time, false}
 	} else {
-		*t = NullTime{i.Time, true}
+		*t = NullDateTime{i.Time, true}
 	}
 
 	return nil
 }
 
-func (n NullTime) Value() (driver.Value, error) {
+func (n NullDateTime) Value() (driver.Value, error) {
 	if !n.Valid {
 		return nil, nil
 	}
@@ -334,7 +442,7 @@ func (n NullTime) Value() (driver.Value, error) {
 	return n.Time, nil
 }
 
-func (t NullTime) MarshalJSON() ([]byte, error) {
+func (t NullDateTime) MarshalJSON() ([]byte, error) {
 	if !t.Valid {
 		return json.Marshal(nil)
 	}
@@ -342,7 +450,7 @@ func (t NullTime) MarshalJSON() ([]byte, error) {
 	return json.Marshal(t.Time)
 }
 
-func (t *NullTime) UnmarshalJSON(data []byte) error {
+func (t *NullDateTime) UnmarshalJSON(data []byte) error {
 	var ptr *time.Time
 	if err := json.Unmarshal(data, &ptr); err != nil {
 		return err
