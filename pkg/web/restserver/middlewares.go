@@ -3,7 +3,6 @@ package restserver
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/security"
