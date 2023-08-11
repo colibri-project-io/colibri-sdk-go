@@ -1,20 +1,24 @@
 package restserver
 
 import (
+	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
+
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/security"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/google/uuid"
-	"net/http"
-	"strings"
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/monitoring"
 )
 
 const (
-	userIDHeader   = "X-UserId"
-	tenantIDHeader = "X-TenantId"
+	authorizationHeader = "Authorization"
+	userIDHeader        = "X-User-Id"
+	tenantIDHeader      = "X-Tenant-Id"
 )
 
 type MiddlewareError struct {
@@ -94,6 +98,6 @@ func accessControlFiberMiddleware() fiber.Handler {
 	return cors.New(cors.Config{
 		AllowOrigins: "*",
 		AllowMethods: "OPTIONS, GET, POST, PUT, PATCH, DELETE",
-		AllowHeaders: "Origin, Content-Type",
+		AllowHeaders: fmt.Sprintf("Origin, Content-Type, %s, %s, %s", authorizationHeader, userIDHeader, tenantIDHeader),
 	})
 }

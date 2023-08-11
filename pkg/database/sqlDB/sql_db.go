@@ -11,6 +11,8 @@ import (
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/observer"
+	_ "github.com/newrelic/go-agent/v3/integrations/nrpq"
+	"golang.org/x/exp/slices"
 )
 
 const (
@@ -96,7 +98,7 @@ func reflectCols(model any) (cols []any) {
 
 func reflectValueValidations(value reflect.Value) (isStruct, isTime, isNull bool) {
 	isStruct = value.Kind() == reflect.Struct
-	isTime = value.Type().String() == "time.Time"
+	isTime = slices.Contains([]string{"time.Time", "types.IsoDate", "types.IsoTime"}, value.Type().String())
 	isNull = strings.Contains(value.Type().String(), "Null")
 	return
 }

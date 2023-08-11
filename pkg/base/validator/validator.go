@@ -19,13 +19,7 @@ func Initialize() {
 		formDecoder: form.NewDecoder(),
 	}
 
-	initializeUUIDCustomType()
-}
-
-func initializeUUIDCustomType() {
-	instance.formDecoder.RegisterCustomTypeFunc(func(vals []string) (interface{}, error) {
-		return uuid.Parse(vals[0])
-	}, uuid.UUID{})
+	registerCustomTypes()
 }
 
 func Struct(object any) error {
@@ -34,4 +28,10 @@ func Struct(object any) error {
 
 func FormDecode(object any, values map[string][]string) error {
 	return instance.formDecoder.Decode(object, values)
+}
+
+func registerCustomTypes() {
+	instance.formDecoder.RegisterCustomTypeFunc(func(vals []string) (any, error) {
+		return uuid.Parse(vals[0])
+	}, uuid.UUID{})
 }

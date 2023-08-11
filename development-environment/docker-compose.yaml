@@ -2,7 +2,7 @@ version: "3"
 
 services:
   wiremock:
-    image: wiremock/wiremock:2.32.0
+    image: wiremock/wiremock:2.32.0-alpine
     command: "--local-response-templating"
     ports:
       - "5050:8080"
@@ -12,7 +12,7 @@ services:
       - dev
 
   localstack:
-    image: localstack/localstack
+    image: localstack/localstack:1.4
     ports:
       - "127.0.0.1:4510-4559:4510-4559"  # external service port range
       - "127.0.0.1:4566:4566"            # LocalStack Edge Proxy

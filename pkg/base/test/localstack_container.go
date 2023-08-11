@@ -56,7 +56,7 @@ func newLocalstackContainer(ctx context.Context, configPath string) *LocalstackC
 		),
 		WaitingFor: wait.ForAll(
 			wait.ForListeningPort(localstackSvcPort),
-			wait.ForLog("localstack topics and queues started"),
+			wait.ForLog("localstack emulator started"),
 		),
 	}
 

@@ -56,10 +56,10 @@ func newPostgresContainer() *PostgresContainer {
 		},
 		WaitingFor: wait.ForAll(
 			wait.ForListeningPort(testPostgresSvcPort),
-			wait.ForSQL(testPostgresSvcPort, "postgres", func(port nat.Port) string {
+			wait.ForSQL(testPostgresSvcPort, "postgres", func(host string, port nat.Port) string {
 				return fmt.Sprintf(
 					"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-					testDbHost,
+					host,
 					port.Port(),
 					testDbUser,
 					testDbPassword,
