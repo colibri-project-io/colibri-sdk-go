@@ -3,17 +3,15 @@ package monitoring
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/url"
-	"os"
 	"testing"
-	"time"
-
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestProductionMonitoring(t *testing.T) {
@@ -73,21 +71,18 @@ func TestProductionMonitoring(t *testing.T) {
 }
 
 func TestNonProductionMonitoring(t *testing.T) {
-	captureOutput := func(fn func()) string {
+	captureOutput := func(fn func()) (out map[string]any) {
 		var buf bytes.Buffer
-		log.SetOutput(&buf)
+		config.LOG_OUTPUT = &buf
+		logging.CreateLogger()
 		fn()
-		log.SetOutput(os.Stderr)
-		return buf.String()
-	}
-
-	formatExpected := func(text string) string {
-		return fmt.Sprintf("%s DEBUG %s\n", time.Now().Format("2006/01/02 15:04:05"), text)
+		_ = json.Unmarshal(buf.Bytes(), &out)
+		return
 	}
 
 	config.APP_NAME = "colibri-project-test"
 	config.ENVIRONMENT = config.ENVIRONMENT_TEST
-	config.DEBUG = true
+	config.LOG_LEVEL = "debug"
 	assert.False(t, config.IsProductionEnvironment())
 
 	Initialize()
@@ -112,7 +107,7 @@ func TestNonProductionMonitoring(t *testing.T) {
 			assert.Empty(t, ctx)
 		})
 
-		assert.Equal(t, formatExpected(text), output)
+		assert.Equal(t, text, output["msg"])
 	})
 
 	t.Run("Should end transaction", func(t *testing.T) {
@@ -122,7 +117,7 @@ func TestNonProductionMonitoring(t *testing.T) {
 			EndTransaction(text)
 		})
 
-		assert.Equal(t, formatExpected(text), output)
+		assert.Equal(t, text, output["msg"])
 	})
 
 	t.Run("Should start transaction segment", func(t *testing.T) {
@@ -134,7 +129,7 @@ func TestNonProductionMonitoring(t *testing.T) {
 			assert.Nil(t, segment)
 		})
 
-		assert.Equal(t, formatExpected(text), output)
+		assert.Equal(t, text, output["msg"])
 	})
 
 	t.Run("Should end transaction segment", func(t *testing.T) {
@@ -144,7 +139,7 @@ func TestNonProductionMonitoring(t *testing.T) {
 			EndTransactionSegment(text)
 		})
 
-		assert.Equal(t, formatExpected(text), output)
+		assert.Equal(t, text, output["msg"])
 	})
 
 	t.Run("Should get transaction in context", func(t *testing.T) {
@@ -154,7 +149,7 @@ func TestNonProductionMonitoring(t *testing.T) {
 			GetTransactionInContext(context.Background())
 		})
 
-		assert.Equal(t, formatExpected(text), output)
+		assert.Equal(t, text, output["msg"])
 	})
 
 	t.Run("Should notice error", func(t *testing.T) {
@@ -165,6 +160,6 @@ func TestNonProductionMonitoring(t *testing.T) {
 			NoticeError(text, err)
 		})
 
-		assert.Equal(t, formatExpected(text), output)
+		assert.Equal(t, text, output["msg"])
 	})
 }

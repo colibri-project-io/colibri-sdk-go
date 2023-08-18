@@ -2,29 +2,26 @@ package logging
 
 import (
 	"bytes"
-	"fmt"
-	"log"
-	"os"
-	"testing"
-	"time"
-
+	"encoding/json"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
-func captureOutput(f func()) string {
+func captureOutput(f func()) (out map[string]any) {
 	var buf bytes.Buffer
-	log.SetOutput(&buf)
+	config.LOG_OUTPUT = &buf
+	CreateLogger()
 	f()
-	log.SetOutput(os.Stderr)
-	return buf.String()
-}
-
-func formatExpected(level Level, text string) string {
-	return fmt.Sprintf("%s %s %s\n", time.Now().Format("2006/01/02 15:04:05"), level, text)
+	_ = json.Unmarshal(buf.Bytes(), &out)
+	return
 }
 
 func TestLogging(t *testing.T) {
+	config.ENVIRONMENT = "test"
+	config.APP_NAME = "sdk-test"
+	config.APP_TYPE = "service"
+
 	t.Run("Should log info", func(t *testing.T) {
 		text := "Log info test"
 
@@ -32,7 +29,8 @@ func TestLogging(t *testing.T) {
 			Info(text)
 		})
 
-		assert.Equal(t, formatExpected(INFO, text), output)
+		assert.Equal(t, text, output["msg"])
+		assert.Equal(t, "INFO", output["level"])
 	})
 
 	t.Run("Should log fatal", func(t *testing.T) {
@@ -48,7 +46,8 @@ func TestLogging(t *testing.T) {
 			Error(text)
 		})
 
-		assert.Equal(t, formatExpected(ERROR, text), output)
+		assert.Equal(t, text, output["msg"])
+		assert.Equal(t, "ERROR", output["level"])
 	})
 
 	t.Run("Should log warn", func(t *testing.T) {
@@ -58,17 +57,26 @@ func TestLogging(t *testing.T) {
 			Warn(text)
 		})
 
-		assert.Equal(t, formatExpected(WARN, text), output)
+		assert.Equal(t, text, output["msg"])
+		assert.Equal(t, "WARN", output["level"])
 	})
+}
+
+func TestDebug(t *testing.T) {
+	config.APP_NAME = "sdk-test"
+	config.APP_TYPE = "service"
+	config.LOG_LEVEL = "debug"
+
+	_ = config.Load()
 
 	t.Run("Should log debug", func(t *testing.T) {
 		text := "Log debug test"
-		config.DEBUG = true
 
 		output := captureOutput(func() {
 			Debug(text)
 		})
 
-		assert.Equal(t, formatExpected(DEBUG, text), output)
+		assert.Equal(t, text, output["msg"])
+		assert.Equal(t, "DEBUG", output["level"])
 	})
 }

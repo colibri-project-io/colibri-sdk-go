@@ -242,27 +242,6 @@ func TestServerPort(t *testing.T) {
 	})
 }
 
-func TestDebug(t *testing.T) {
-	loadTestEnvs(t)
-
-	t.Run("Should return default debug when environment is empty", func(t *testing.T) {
-		Load()
-		assert.False(t, DEBUG)
-	})
-
-	t.Run("Should return error when debug is wrong value", func(t *testing.T) {
-		assert.NoError(t, os.Setenv(ENV_DEBUG, invalid_value))
-		assert.NotNil(t, Load())
-	})
-
-	t.Run("Should return debug when environment is not empty", func(t *testing.T) {
-		assert.NoError(t, os.Setenv(ENV_DEBUG, "true"))
-
-		Load()
-		assert.True(t, DEBUG)
-	})
-}
-
 func TestSqlDBMaxOpenConns(t *testing.T) {
 	loadTestEnvs(t)
 

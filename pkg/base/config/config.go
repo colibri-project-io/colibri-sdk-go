@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 
@@ -18,7 +19,6 @@ const (
 	ENV_CLOUD                 string = "CLOUD"
 	ENV_NEW_RELIC_LICENSE     string = "NEW_RELIC_LICENSE"
 	ENV_PORT                  string = "PORT"
-	ENV_DEBUG                 string = "DEBUG"
 	ENV_SQL_DB_MIGRATION      string = "SQL_DB_MIGRATION"
 	ENV_CLOUD_HOST            string = "CLOUD_HOST"
 	ENV_CLOUD_REGION          string = "CLOUD_REGION"
@@ -35,6 +35,7 @@ const (
 	ENV_SQL_DB_SSL_MODE       string = "SQL_DB_SSL_MODE"
 	ENV_SQL_DB_MAX_OPEN_CONNS string = "SQL_DB_MAX_OPEN_CONNS"
 	ENV_SQL_DB_MAX_IDLE_CONNS string = "SQL_DB_MAX_IDLE_CONNS"
+	ENV_LOG_LEVEL             string = "LOG_LEVEL"
 
 	// Environment values
 	ENVIRONMENT_PRODUCTION        string = "production"
@@ -49,6 +50,7 @@ const (
 	CLOUD_FIREBASE                string = "firebase"
 	SQL_DB_DRIVER                 string = "nrpostgres"
 	SQL_DB_CONNECTION_URI_DEFAULT string = "host=%s port=%s user=%s password=%s dbname=%s application_name='%s' sslmode=%s"
+	VERSION                              = "v0.0.1"
 
 	// Errors
 	error_enviroment_not_configured                 string = "environment is not configured. Set production, sandbox, development or test"
@@ -65,8 +67,10 @@ var (
 	APP_NAME          = ""
 	APP_TYPE          = ""
 	NEW_RELIC_LICENSE = ""
-	DEBUG             = false
 	PORT              = 8080
+
+	LOG_LEVEL            = "info"
+	LOG_OUTPUT io.Writer = os.Stdout
 
 	CLOUD             = ""
 	CLOUD_HOST        = ""
@@ -114,11 +118,11 @@ func Load() error {
 		return errors.New(error_production_required_params_not_configured)
 	}
 
-	if err := convertIntEnv(&PORT, ENV_PORT); err != nil {
-		return err
+	if logLevel := os.Getenv(ENV_LOG_LEVEL); logLevel != "" {
+		LOG_LEVEL = logLevel
 	}
 
-	if err := convertBoolEnv(&DEBUG, ENV_DEBUG); err != nil {
+	if err := convertIntEnv(&PORT, ENV_PORT); err != nil {
 		return err
 	}
 
