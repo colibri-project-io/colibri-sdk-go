@@ -83,6 +83,10 @@ func (f *fiberWebServer) injectRoutes() {
 
 			fn(webContext)
 
+			if webContext.err != nil {
+				return webContext.err
+			}
+
 			return nil
 		})
 
