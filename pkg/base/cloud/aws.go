@@ -9,24 +9,12 @@ import (
 )
 
 func newAwsSession() *session.Session {
-	var awsConfig *aws.Config
-
-	if config.IsCloudEnvironment() {
-		awsConfig = &aws.Config{
-			Region:           aws.String(config.CLOUD_REGION),
-			Endpoint:         aws.String(config.CLOUD_HOST),
-			DisableSSL:       aws.Bool(config.CLOUD_DISABLE_SSL),
-			Credentials:      credentials.NewStaticCredentials(uuid.NewString(), config.CLOUD_SECRET, config.CLOUD_TOKEN),
-			S3ForcePathStyle: aws.Bool(true),
-		}
-	} else {
-		awsConfig = &aws.Config{
-			Region:           aws.String(config.CLOUD_REGION),
-			Endpoint:         aws.String(config.CLOUD_HOST),
-			DisableSSL:       aws.Bool(config.CLOUD_DISABLE_SSL),
-			Credentials:      credentials.NewStaticCredentials(uuid.NewString(), config.CLOUD_SECRET, config.CLOUD_TOKEN),
-			S3ForcePathStyle: aws.Bool(true),
-		}
+	awsConfig := &aws.Config{
+		Region:           aws.String(config.CLOUD_REGION),
+		Endpoint:         aws.String(config.CLOUD_HOST),
+		DisableSSL:       aws.Bool(config.CLOUD_DISABLE_SSL),
+		Credentials:      credentials.NewStaticCredentials(uuid.NewString(), config.CLOUD_SECRET, config.CLOUD_TOKEN),
+		S3ForcePathStyle: aws.Bool(true),
 	}
 
 	return session.Must(session.NewSession(awsConfig))
