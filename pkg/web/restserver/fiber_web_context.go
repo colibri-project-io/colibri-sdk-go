@@ -14,6 +14,7 @@ import (
 
 type fiberWebContext struct {
 	ctx *fiber.Ctx
+	err error
 }
 
 func newFiberWebContext(ctx *fiber.Ctx) *fiberWebContext {
@@ -102,6 +103,7 @@ func (f *fiberWebContext) JsonResponse(statusCode int, body any) {
 func (f *fiberWebContext) ErrorResponse(statusCode int, err error) {
 	f.ctx.Response().SetStatusCode(statusCode)
 	_ = f.ctx.JSON(Error{err.Error()})
+	f.err = err
 }
 
 func (f *fiberWebContext) EmptyResponse(statusCode int) {

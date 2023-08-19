@@ -13,11 +13,15 @@ import (
 
 const (
 	// Environments
-	ENV_ENVIRONMENT           string = "ENVIRONMENT"
-	ENV_APP_NAME              string = "APP_NAME"
-	ENV_APP_TYPE              string = "APP_TYPE"
-	ENV_CLOUD                 string = "CLOUD"
-	ENV_NEW_RELIC_LICENSE     string = "NEW_RELIC_LICENSE"
+	ENV_ENVIRONMENT string = "ENVIRONMENT"
+	ENV_APP_NAME    string = "APP_NAME"
+	ENV_APP_TYPE    string = "APP_TYPE"
+	ENV_CLOUD       string = "CLOUD"
+
+	ENV_NEW_RELIC_LICENSE           string = "NEW_RELIC_LICENSE"
+	ENV_OTEL_EXPORTER_OTLP_ENDPOINT string = "OTEL_EXPORTER_OTLP_ENDPOINT"
+	ENV_OTEL_EXPORTER_OTLP_HEADERS  string = "OTEL_EXPORTER_OTLP_HEADERS"
+
 	ENV_PORT                  string = "PORT"
 	ENV_SQL_DB_MIGRATION      string = "SQL_DB_MIGRATION"
 	ENV_CLOUD_HOST            string = "CLOUD_HOST"
@@ -48,7 +52,6 @@ const (
 	CLOUD_AZURE                   string = "azure"
 	CLOUD_GCP                     string = "gcp"
 	CLOUD_FIREBASE                string = "firebase"
-	SQL_DB_DRIVER                 string = "nrpostgres"
 	SQL_DB_CONNECTION_URI_DEFAULT string = "host=%s port=%s user=%s password=%s dbname=%s application_name='%s' sslmode=%s"
 	VERSION                              = "v0.0.1"
 
@@ -58,15 +61,20 @@ const (
 	error_app_type_not_configured                   string = "app type is not configured. Set service or serverless"
 	error_cloud_not_configured                      string = "cloud is not configured. Set aws, azure, gcp or firebase"
 	error_production_required_params_not_configured string = "production required params not configured. Set NEW_RELIC_LICENSE"
-	error_integer_parse                             string = "could not parse %s, permited int value, got %v: %w"
-	error_boolean_parse                             string = "could not parse %s, permited 'true' or 'false', got %v: %w"
+	error_integer_parse                             string = "could not parse %s, permitted int value, got %v: %w"
+	error_boolean_parse                             string = "could not parse %s, permitted 'true' or 'false', got %v: %w"
 )
 
 var (
-	ENVIRONMENT       = ""
-	APP_NAME          = ""
-	APP_TYPE          = ""
-	NEW_RELIC_LICENSE = ""
+	ENVIRONMENT = ""
+	APP_NAME    = ""
+	APP_TYPE    = ""
+	APP_VERSION = ""
+
+	NEW_RELIC_LICENSE           = ""
+	OTEL_EXPORTER_OTLP_ENDPOINT = ""
+	OTEL_EXPORTER_OTLP_HEADERS  = ""
+
 	PORT              = 8080
 
 	LOG_LEVEL            = "info"
@@ -114,9 +122,8 @@ func Load() error {
 	}
 
 	NEW_RELIC_LICENSE = os.Getenv(ENV_NEW_RELIC_LICENSE)
-	if (ENVIRONMENT == ENVIRONMENT_PRODUCTION) && (NEW_RELIC_LICENSE == "") {
-		return errors.New(error_production_required_params_not_configured)
-	}
+	OTEL_EXPORTER_OTLP_ENDPOINT = os.Getenv(ENV_OTEL_EXPORTER_OTLP_ENDPOINT)
+	OTEL_EXPORTER_OTLP_HEADERS = os.Getenv(ENV_OTEL_EXPORTER_OTLP_HEADERS)
 
 	if logLevel := os.Getenv(ENV_LOG_LEVEL); logLevel != "" {
 		LOG_LEVEL = logLevel

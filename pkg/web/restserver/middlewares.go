@@ -3,7 +3,6 @@ package restserver
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/security"
@@ -74,14 +73,14 @@ func extractUuidFromHeader(ctx *fiber.Ctx, key string) uuid.UUID {
 
 func newRelicFiberMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		txn, ctx := monitoring.StartTransaction(c.UserContext(), fmt.Sprintf("%s %s", c.Request().Header.Method(), c.Request().URI().Path()))
-		defer monitoring.EndTransaction(txn)
-
 		headers := make(http.Header)
 		c.Context().Request.Header.VisitAll(func(key, value []byte) {
 			headers.Set(string(key), string(value))
 		})
-		monitoring.SetWebRequest(txn, headers, &url.URL{Path: c.BaseURL()}, c.Method())
+		headers.Set("X-Request-URI", string(c.Request().RequestURI()))
+		headers.Set("X-Protocol", c.Protocol())
+		txn, ctx := monitoring.StartWebRequest(c.UserContext(), headers, c.Path(), c.Method())
+		defer monitoring.EndTransaction(txn)
 
 		c.SetUserContext(ctx)
 		err := c.Next()

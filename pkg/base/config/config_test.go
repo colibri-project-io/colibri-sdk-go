@@ -208,15 +208,10 @@ func TestNewRelicKey(t *testing.T) {
 	assert.NoError(t, os.Setenv(ENV_APP_TYPE, APP_TYPE_SERVERLESS))
 	assert.NoError(t, os.Setenv(ENV_CLOUD, CLOUD_FIREBASE))
 
-	t.Run("Should return error when new relic key is not configured in production environment", func(t *testing.T) {
-		err := Load()
-		assert.EqualError(t, err, error_production_required_params_not_configured)
-	})
-
 	t.Run("Should return new relic key is configured in production environment", func(t *testing.T) {
 		assert.NoError(t, os.Setenv(ENV_NEW_RELIC_LICENSE, new_relic_license_value))
 
-		Load()
+		_ = Load()
 		assert.Equal(t, new_relic_license_value, NEW_RELIC_LICENSE)
 	})
 }
@@ -225,7 +220,7 @@ func TestServerPort(t *testing.T) {
 	loadTestEnvs(t)
 
 	t.Run("Should return default server port when environment is empty", func(t *testing.T) {
-		Load()
+		_ = Load()
 		assert.Equal(t, 8080, PORT)
 	})
 
