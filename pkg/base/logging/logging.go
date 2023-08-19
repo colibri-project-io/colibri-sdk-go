@@ -3,7 +3,7 @@ package logging
 import (
 	"fmt"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"strings"
 )
 

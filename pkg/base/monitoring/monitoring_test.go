@@ -10,8 +10,6 @@ import (
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
 	"github.com/stretchr/testify/assert"
 	"net/http"
-	"net/url"
-	"os"
 	"testing"
 )
 

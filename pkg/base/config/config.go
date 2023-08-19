@@ -75,7 +75,7 @@ var (
 	OTEL_EXPORTER_OTLP_ENDPOINT = ""
 	OTEL_EXPORTER_OTLP_HEADERS  = ""
 
-	PORT              = 8080
+	PORT = 8080
 
 	LOG_LEVEL            = "info"
 	LOG_OUTPUT io.Writer = os.Stdout
