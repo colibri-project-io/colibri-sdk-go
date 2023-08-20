@@ -4,6 +4,7 @@ on:
     branches:
       - master
   pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   test:
@@ -11,12 +12,12 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Setup Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v4
         with:
           go-version: '1.21'
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -26,8 +27,9 @@ jobs:
           go install github.com/golang/mock/mockgen@v1.6.0
           go mod download
           make test
-      - name: sonar
-        uses: sonarsource/sonarcloud-github-action@master
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
