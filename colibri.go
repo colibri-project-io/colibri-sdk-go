@@ -5,7 +5,6 @@ import (
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/cloud"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/monitoring"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/observer"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/validator"
@@ -18,14 +17,12 @@ const banner = `
  '-..-| /   / __ / _ \| | | '_ \| '__| |
     /\/\   | (__| (_) | | | |_) | |  | |
     '--'    \___ \___/|_|_|_.__/|_|  |_|
-            project - v%s
+            project
 `
-
-var Version string = "0.0.0"
 
 func InitializeApp() {
 	if err := config.Load(); err != nil {
-		logging.Fatal("Occurred a error on try load configs: %v", err)
+		panic(fmt.Sprintf("Occurred a error on try load configs: %v", err))
 	}
 
 	printBanner()
@@ -38,7 +35,9 @@ func InitializeApp() {
 }
 
 func printBanner() {
-	fmt.Printf(banner, Version)
+	if config.IsDevelopmentEnvironment() {
+		fmt.Printf(banner)
+	}
 }
 
 func printApplicationName() {

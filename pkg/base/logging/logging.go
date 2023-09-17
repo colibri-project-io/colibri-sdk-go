@@ -7,16 +7,23 @@ import (
 	"strings"
 )
 
-var log *slog.Logger
+var logger *slog.Logger
 
 func init() {
-	CreateLogger()
+	InitializeLogger()
 }
 
-func CreateLogger() {
-	opts := &slog.HandlerOptions{Level: parseLevel(config.LOG_LEVEL)}
-	log = slog.New(slog.NewJSONHandler(config.LOG_OUTPUT, opts)).
+func InitializeLogger() {
+	logger = slog.New(createLogHandler()).
 		With("colibri-sdk-go", map[string]string{"application": config.APP_NAME, "application_type": config.APP_TYPE, "version": config.VERSION})
+}
+
+func createLogHandler() slog.Handler {
+	opts := &slog.HandlerOptions{Level: parseLevel(config.LOG_LEVEL)}
+	if config.IsDevelopmentEnvironment() {
+		return slog.NewTextHandler(config.LOG_OUTPUT, opts)
+	}
+	return slog.NewJSONHandler(config.LOG_OUTPUT, opts)
 }
 
 func parseLevel(lvl string) slog.Level {
@@ -35,30 +42,30 @@ func parseLevel(lvl string) slog.Level {
 // Info prints in console an info message
 func Info(message string, args ...interface{}) {
 	msg := fmt.Sprintf(message, args...)
-	log.Info(msg)
+	logger.Info(msg)
 }
 
 // Fatal prints in console a fatal message and exits program
 func Fatal(message string, args ...interface{}) {
 	msg := fmt.Sprintf(message, args...)
-	log.Error(msg)
+	logger.Error(msg)
 	panic(msg)
 }
 
 // Error prints in console a error message
 func Error(message string, args ...interface{}) {
 	msg := fmt.Sprintf(message, args...)
-	log.Error(msg)
+	logger.Error(msg)
 }
 
 // Warn prints in console a warn message
 func Warn(message string, args ...interface{}) {
 	msg := fmt.Sprintf(message, args...)
-	log.Warn(msg)
+	logger.Warn(msg)
 }
 
 // Debug prints in console a debug message if config is enabled
 func Debug(message string, args ...interface{}) {
 	msg := fmt.Sprintf(message, args...)
-	log.Debug(msg)
+	logger.Debug(msg)
 }
