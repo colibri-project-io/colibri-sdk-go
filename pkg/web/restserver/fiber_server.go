@@ -5,6 +5,7 @@ import (
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/swagger"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 	"strings"
@@ -61,6 +62,7 @@ func (f *fiberWebServer) pathIsPathParam(path string) bool {
 
 func (f *fiberWebServer) injectRoutes() {
 	f.addMetricsRoute()
+	f.addSwaggerUI()
 
 	replacer := strings.NewReplacer(
 		"{", "",
@@ -115,6 +117,12 @@ func (f *fiberWebServer) addMetricsRoute() {
 	})
 
 	logging.Debug(fmt.Sprintf("Starting metrics on route: %s", route))
+}
+
+func (f *fiberWebServer) addSwaggerUI() {
+	if config.IsDevelopmentEnvironment() {
+		f.srv.Get("/swagger/*", swagger.New(swagger.Config{URL: "/v2/api-docs"}))
+	}
 }
 
 func (f *fiberWebServer) registerCustomMiddleware(m CustomMiddleware) {
