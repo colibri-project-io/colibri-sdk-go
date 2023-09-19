@@ -11,9 +11,9 @@ require (
 	github.com/go-playground/form/v4 v4.2.1
 	github.com/go-playground/validator/v10 v10.15.0
 	github.com/go-redis/redis/v8 v8.11.5
-	github.com/gofiber/fiber/v2 v2.48.0
+	github.com/gofiber/fiber/v2 v2.49.2
 	github.com/golang-migrate/migrate/v4 v4.16.2
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.3.1
 	github.com/joho/godotenv v1.5.1
 	github.com/mercari/go-circuitbreaker v0.0.2
 	github.com/newrelic/go-agent/v3 v3.24.1
@@ -22,7 +22,7 @@ require (
 	github.com/prometheus/client_golang v1.16.0
 	github.com/stretchr/testify v1.8.4
 	github.com/testcontainers/testcontainers-go v0.22.0
-	github.com/valyala/fasthttp v1.48.0
+	github.com/valyala/fasthttp v1.49.0
 	go.nhat.io/otelsql v0.11.0
 	go.opentelemetry.io/contrib v1.17.0
 	go.opentelemetry.io/otel v1.16.0
@@ -74,13 +74,13 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/klauspost/compress v1.16.3 // indirect
+	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/lib/pq v1.10.9 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
-	github.com/mattn/go-runewidth v0.0.14 // indirect
+	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/moby/patternmatcher v0.5.0 // indirect
 	github.com/moby/sys/sequential v0.5.0 // indirect
@@ -108,7 +108,7 @@ require (
 	golang.org/x/net v0.14.0 // indirect
 	golang.org/x/oauth2 v0.11.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/sys v0.11.0 // indirect
+	golang.org/x/sys v0.12.0 // indirect
 	golang.org/x/text v0.12.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.9.1 // indirect
