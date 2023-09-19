@@ -60,7 +60,7 @@ func TestNonProductionMonitoring(t *testing.T) {
 	captureOutput := func(fn func()) (out map[string]any) {
 		var buf bytes.Buffer
 		config.LOG_OUTPUT = &buf
-		logging.CreateLogger()
+		logging.InitializeLogger()
 		fn()
 		_ = json.Unmarshal(buf.Bytes(), &out)
 		return

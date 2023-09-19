@@ -1,9 +1,10 @@
-package logging
+package logging_test
 
 import (
 	"bytes"
 	"encoding/json"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -11,7 +12,7 @@ import (
 func captureOutput(f func()) (out map[string]any) {
 	var buf bytes.Buffer
 	config.LOG_OUTPUT = &buf
-	CreateLogger()
+	logging.InitializeLogger()
 	f()
 	_ = json.Unmarshal(buf.Bytes(), &out)
 	return
@@ -22,39 +23,39 @@ func TestLogging(t *testing.T) {
 	config.APP_NAME = "sdk-test"
 	config.APP_TYPE = "service"
 
-	t.Run("Should log info", func(t *testing.T) {
+	t.Run("Should logger info", func(t *testing.T) {
 		text := "Log info test"
 
 		output := captureOutput(func() {
-			Info(text)
+			logging.Info(text)
 		})
 
 		assert.Equal(t, text, output["msg"])
 		assert.Equal(t, "INFO", output["level"])
 	})
 
-	t.Run("Should log fatal", func(t *testing.T) {
+	t.Run("Should logger fatal", func(t *testing.T) {
 		text := "Log fatal test"
 
-		assert.PanicsWithValue(t, text, func() { Fatal(text) })
+		assert.PanicsWithValue(t, text, func() { logging.Fatal(text) })
 	})
 
-	t.Run("Should log error", func(t *testing.T) {
+	t.Run("Should logger error", func(t *testing.T) {
 		text := "Log error test"
 
 		output := captureOutput(func() {
-			Error(text)
+			logging.Error(text)
 		})
 
 		assert.Equal(t, text, output["msg"])
 		assert.Equal(t, "ERROR", output["level"])
 	})
 
-	t.Run("Should log warn", func(t *testing.T) {
+	t.Run("Should logger warn", func(t *testing.T) {
 		text := "Log warn test"
 
 		output := captureOutput(func() {
-			Warn(text)
+			logging.Warn(text)
 		})
 
 		assert.Equal(t, text, output["msg"])
@@ -67,13 +68,13 @@ func TestDebug(t *testing.T) {
 	config.APP_TYPE = "service"
 	config.LOG_LEVEL = "debug"
 
-	_ = config.Load()
+	logging.InitializeLogger()
 
-	t.Run("Should log debug", func(t *testing.T) {
+	t.Run("Should logger debug", func(t *testing.T) {
 		text := "Log debug test"
 
 		output := captureOutput(func() {
-			Debug(text)
+			logging.Debug(text)
 		})
 
 		assert.Equal(t, text, output["msg"])
