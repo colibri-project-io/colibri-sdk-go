@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"mime/multipart"
 
@@ -24,16 +25,15 @@ func newGcpStorage() *gcpStorage {
 }
 
 func (s *gcpStorage) uploadFile(ctx context.Context, bucket, key string, file *multipart.File) (string, error) {
-	wc := s.client.Bucket(bucket).Object(key).NewWriter(ctx)
-	if _, err := io.Copy(wc, *file); err != nil {
+	writer := s.client.Bucket(bucket).Object(key).NewWriter(ctx)
+	if _, err := io.Copy(writer, *file); err != nil {
 		return "", err
 	}
-	fileLink := wc.MediaLink
-	if err := wc.Close(); err != nil {
+	if err := writer.Close(); err != nil {
 		return "", err
 	}
 
-	return fileLink, nil
+	return fmt.Sprintf("https://storage.googleapis.com/%s/%s", bucket, key), nil
 }
 
 func (s *gcpStorage) deleteFile(ctx context.Context, bucket, key string) error {
