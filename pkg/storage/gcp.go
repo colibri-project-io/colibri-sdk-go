@@ -33,7 +33,7 @@ func (s *gcpStorage) uploadFile(ctx context.Context, bucket, key string, file *m
 		return "", err
 	}
 
-	return fmt.Sprintf("https://storage.googleapis.com/%s/%s", bucket, key), nil
+	return fmt.Sprintf("https://storage.cloud.google.com/%s/%s", bucket, key), nil
 }
 
 func (s *gcpStorage) deleteFile(ctx context.Context, bucket, key string) error {
