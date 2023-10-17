@@ -26,6 +26,7 @@ func newGcpStorage() *gcpStorage {
 
 func (s *gcpStorage) uploadFile(ctx context.Context, bucket, key string, file *multipart.File) (string, error) {
 	writer := s.client.Bucket(bucket).Object(key).NewWriter(ctx)
+	writer.CacheControl = "no-cache, max-age=1"
 	if _, err := io.Copy(writer, *file); err != nil {
 		return "", err
 	}
@@ -33,7 +34,7 @@ func (s *gcpStorage) uploadFile(ctx context.Context, bucket, key string, file *m
 		return "", err
 	}
 
-	return fmt.Sprintf("https://storage.cloud.google.com/%s/%s", bucket, key), nil
+	return fmt.Sprintf("https://storage.googleapis.com/%s/%s", bucket, key), nil
 }
 
 func (s *gcpStorage) deleteFile(ctx context.Context, bucket, key string) error {
