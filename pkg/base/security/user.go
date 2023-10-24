@@ -11,6 +11,7 @@ type User struct {
 	Name     string
 	TenantID string
 	Profile  string
+	PhotoURL string
 }
 
 type UserCreate struct {
@@ -20,6 +21,7 @@ type UserCreate struct {
 	Name     string
 	TenantID string
 	Profile  string
+	PhotoURL string
 }
 
 type UserUpdate struct {
@@ -28,4 +30,5 @@ type UserUpdate struct {
 	Name     string
 	TenantID string
 	Profile  string
+	PhotoURL string
 }
