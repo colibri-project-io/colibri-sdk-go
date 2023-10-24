@@ -23,7 +23,9 @@ func Initialize() {
 		instance.aws = newAwsSession()
 	case config.CLOUD_FIREBASE:
 		instance.firebase = newFirebaseSession()
-	case config.CLOUD_AZURE, config.CLOUD_GCP:
+	case config.CLOUD_GCP:
+		logging.Info("Initializing GCP.")
+	case config.CLOUD_AZURE:
 		logging.Fatal("Not implemented yet")
 	}
 
