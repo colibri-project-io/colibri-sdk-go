@@ -3,6 +3,7 @@ package messaging
 import (
 	"context"
 	"encoding/json"
+	"os"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
@@ -13,7 +14,7 @@ type gcpMessaging struct {
 }
 
 func newGcpMessaging() *gcpMessaging {
-	client, err := pubsub.NewClient(context.Background(), "config.PROJECT_ID")
+	client, err := pubsub.NewClient(context.Background(), os.Getenv("PUBSUB_PROJECT_ID"))
 	if err != nil {
 		logging.Fatal(connection_error, err)
 	}
