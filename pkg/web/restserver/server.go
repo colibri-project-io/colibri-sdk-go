@@ -46,5 +46,7 @@ func ListenAndServe() {
 
 	observer.Attach(restObserver{})
 	logging.Info("Service '%s' running in %d port", "WEB-REST", config.PORT)
-	log.Fatal(srv.listenAndServe())
+	if err := srv.listenAndServe(); err != nil {
+		log.Fatalf("Error rest server: %v", err)
+	}
 }
