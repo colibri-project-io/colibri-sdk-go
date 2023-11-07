@@ -39,8 +39,11 @@ func (s *firebaseAuthService) CreateUser(ctx context.Context, user *UserCreate) 
 		UID(user.ID).
 		Email(user.Email).
 		Password(user.Password).
-		DisplayName(user.Name).
-		PhotoURL(user.PhotoURL)
+		DisplayName(user.Name)
+
+	if user.PhotoURL != "" {
+		userToCreate.PhotoURL(user.PhotoURL)
+	}
 
 	if _, err := s.client.CreateUser(ctx, userToCreate); err != nil {
 		return err
