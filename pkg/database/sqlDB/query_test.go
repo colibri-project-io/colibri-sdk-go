@@ -146,6 +146,21 @@ func TestQuery(t *testing.T) {
 		assert.Len(t, result, 1)
 		assert.Equal(t, "ADMIN USER", result[0].Name)
 	})
+
+	t.Run("Many Dogs", func(t *testing.T) {
+		datasets := []string{"clear-database.sql", "add-dogs.sql"}
+		assert.NoError(t, pc.Dataset(basePath, datasets...))
+		query := "SELECT id, name, characteristics FROM dog ORDER BY name"
+		dogs, err := NewQuery[Dog](context.Background(), query).Many()
+		assert.NoError(t, err)
+		assert.Len(t, dogs, 2)
+		assert.Equal(t, dogs[0].Name, "Pitty")
+		assert.Len(t, dogs[0].Characteristics, 2)
+		assert.Equal(t, dogs[0].Characteristics, []string{"mad", "destructive"})
+		assert.Equal(t, dogs[1].Name, "Stella")
+		assert.Len(t, dogs[1].Characteristics, 1)
+		assert.Equal(t, dogs[1].Characteristics, []string{"cute"})
+	})
 }
 
 func TestQueryWithoutCacheDBInitialize(t *testing.T) {

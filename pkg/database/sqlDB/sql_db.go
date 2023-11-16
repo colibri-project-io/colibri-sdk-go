@@ -3,6 +3,7 @@ package sqlDB
 import (
 	"database/sql"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/monitoring"
+	"github.com/lib/pq"
 	"reflect"
 	"strings"
 
@@ -76,8 +77,10 @@ func reflectCols(model any) (cols []any) {
 	typeOf := reflect.TypeOf(model).Elem()
 	valueOf := reflect.ValueOf(model).Elem()
 
-	isStruct, isTime, isNull := reflectValueValidations(valueOf)
-	if !isStruct || isTime || isNull {
+	isStruct, isTime, isNull, isSlice := reflectValueValidations(valueOf)
+	if isSlice {
+		cols = append(cols, pq.Array(valueOf.Addr().Interface()))
+	} else if !isStruct || isTime || isNull {
 		cols = append(cols, valueOf.Addr().Interface())
 		return
 	}
@@ -85,8 +88,10 @@ func reflectCols(model any) (cols []any) {
 	for i := 0; i < typeOf.NumField(); i++ {
 		field := valueOf.Field(i)
 
-		isStruct, isTime, isNull := reflectValueValidations(field)
-		if isStruct && !isTime && !isNull {
+		isStruct, isTime, isNull, isSlice := reflectValueValidations(field)
+		if isSlice {
+			cols = append(cols, pq.Array(field.Addr().Interface()))
+		} else if isStruct && !isTime && !isNull {
 			cols = append(cols, reflectCols(field.Addr().Interface())...)
 		} else {
 			cols = append(cols, field.Addr().Interface())
@@ -96,10 +101,11 @@ func reflectCols(model any) (cols []any) {
 	return cols
 }
 
-func reflectValueValidations(value reflect.Value) (isStruct, isTime, isNull bool) {
+func reflectValueValidations(value reflect.Value) (isStruct, isTime, isNull, isSlice bool) {
 	isStruct = value.Kind() == reflect.Struct
 	isTime = slices.Contains([]string{"time.Time", "types.IsoDate", "types.IsoTime"}, value.Type().String())
 	isNull = strings.Contains(value.Type().String(), "Null")
+	isSlice = value.Kind() == reflect.Slice
 	return
 }
 

@@ -19,3 +19,9 @@ type User struct {
 	Birthday time.Time
 	Profile  Profile
 }
+
+type Dog struct {
+	ID              uint
+	Name            string
+	Characteristics []string
+}

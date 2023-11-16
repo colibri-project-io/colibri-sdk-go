@@ -11,3 +11,9 @@ CREATE TABLE IF NOT EXISTS users (
     CONSTRAINT fk_users_profiles FOREIGN KEY (profile_id) REFERENCES profiles (id)
 );
 
+CREATE TABLE IF NOT EXISTS dog
+(
+    id              SERIAL PRIMARY KEY,
+    name            TEXT NOT NULL,
+    characteristics TEXT[]
+);
