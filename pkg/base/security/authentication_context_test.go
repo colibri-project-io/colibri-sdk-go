@@ -9,8 +9,8 @@ import (
 )
 
 func TestNewAuthenticationContext(t *testing.T) {
-	var defaultUserId uuid.UUID = uuid.MustParse("5e859dae-c879-11eb-b8bc-0242ac130003")
-	var defaultTenantId uuid.UUID = uuid.MustParse("5e859dae-c879-11eb-b8bc-0242ac130004")
+	var defaultUserId = uuid.MustParse("5e859dae-c879-11eb-b8bc-0242ac130003").String()
+	var defaultTenantId = uuid.MustParse("5e859dae-c879-11eb-b8bc-0242ac130004").String()
 
 	t.Run("Should return tenant and user", func(t *testing.T) {
 		result := NewAuthenticationContext(defaultTenantId, defaultUserId)

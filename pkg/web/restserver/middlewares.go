@@ -5,13 +5,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/monitoring"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/security"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/google/uuid"
-
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/monitoring"
 )
 
 const (
@@ -37,14 +34,18 @@ type CustomMiddleware interface {
 	Apply(ctx WebContext) *MiddlewareError
 }
 
+type CustomAuthenticationMiddleware interface {
+	Apply(ctx WebContext) (*security.AuthenticationContext, error)
+}
+
 func authenticationContextFiberMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		if !strings.Contains(c.Request().URI().String(), string(AuthenticatedApi)) {
 			return c.Next()
 		}
 
-		tenantID := extractUuidFromHeader(c, tenantIDHeader)
-		userID := extractUuidFromHeader(c, userIDHeader)
+		tenantID := string(c.Request().Header.Peek(tenantIDHeader))
+		userID := string(c.Request().Header.Peek(userIDHeader))
 		authCtx := security.NewAuthenticationContext(tenantID, userID)
 		if authCtx.Valid() {
 			newCtx := authCtx.SetInContext(c.UserContext())
@@ -58,17 +59,19 @@ func authenticationContextFiberMiddleware() fiber.Handler {
 	}
 }
 
-func extractUuidFromHeader(ctx *fiber.Ctx, key string) uuid.UUID {
-	valueStr := string(ctx.Request().Header.Peek(key))
-	if valueStr == "" {
-		return uuid.Nil
+func customAuthenticationContextFiberMiddleware() fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		webCtx := &fiberWebContext{ctx: ctx}
+		authCtx, err := customAuth.Apply(webCtx)
+		if err != nil {
+			ctx.Status(http.StatusUnauthorized)
+			return ctx.JSON(err)
+		}
+
+		newCtx := authCtx.SetInContext(ctx.UserContext())
+		ctx.SetUserContext(newCtx)
+		return ctx.Next()
 	}
-	value, err := uuid.Parse(valueStr)
-	if err != nil {
-		logging.Error("could not parse %s from header %s: %v", key, valueStr, err)
-		return uuid.Nil
-	}
-	return value
 }
 
 func newRelicFiberMiddleware() fiber.Handler {
