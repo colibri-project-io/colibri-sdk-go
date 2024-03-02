@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/security"
 	"net"
 	"net/http"
 	"strings"
@@ -29,6 +30,22 @@ func (t *customMiddlewareTest) Apply(ctx WebContext) *MiddlewareError {
 		return NewMiddlewareError(http.StatusConflict, errors.New("has conflict"))
 	}
 	return nil
+}
+
+type customAuthenticationContextMiddleware struct {
+}
+
+func (m *customAuthenticationContextMiddleware) Apply(ctx WebContext) (*security.AuthenticationContext, error) {
+	if !strings.Contains(ctx.Path(), string(AuthenticatedApi)) {
+		return nil, nil
+	}
+
+	authHeaders := ctx.RequestHeaders()["Authorization"]
+	if len(authHeaders) < 1 || authHeaders[0] == "" {
+		return nil, UserUnauthenticatedError
+	}
+	return security.NewAuthenticationContext("ab123", "123abc"), nil
+
 }
 
 func beforeEnterApply(ctx WebContext) *MiddlewareError {
@@ -445,5 +462,55 @@ func TestStartRestServer(t *testing.T) {
 		assert.NotNil(t, resp)
 		assert.Equal(t, http.StatusOK, resp.Status())
 		assert.Equal(t, "success", resp.Body().Msg)
+	})
+}
+
+func TestStartRestServerCustomAuthMiddleware(t *testing.T) {
+	test.InitializeBaseTest()
+
+	type Resp struct {
+		Msg string `json:"msg" validate:"required"`
+	}
+
+	listener := func() (l net.Listener) {
+		l, err := net.Listen("tcp", ":0")
+		if err != nil {
+			t.Error("could not get available port")
+		}
+		return l
+	}
+
+	AddRoutes([]Route{
+		{
+			URI:    "users",
+			Method: http.MethodGet,
+			Function: func(ctx WebContext) {
+				ctx.JsonResponse(http.StatusOK, &Resp{Msg: "test-custom-authentication-middleware"})
+			},
+			Prefix: AuthenticatedApi,
+		},
+	})
+
+	l := listener()
+	config.PORT = l.Addr().(*net.TCPAddr).Port
+	_ = l.Close()
+
+	CustomAuthMiddleware(&customAuthenticationContextMiddleware{})
+	go ListenAndServe()
+	time.Sleep(1 * time.Second)
+	client := restclient.NewRestClient("test-server", fmt.Sprintf("http://localhost:%d", config.PORT), 1)
+
+	t.Run("Should return status 200", func(t *testing.T) {
+		resp := restclient.Get[Resp](context.Background(), client, "/api/users", map[string]string{"Authorization": "abcd1234"})
+		assert.NoError(t, resp.Error())
+		assert.NotNil(t, resp.Body())
+		assert.Equal(t, "test-custom-authentication-middleware", resp.Body().Msg)
+	})
+
+	t.Run("Should return error 401", func(t *testing.T) {
+		resp := restclient.Get[Resp](context.Background(), client, "/api/users", nil)
+		assert.NotNil(t, resp)
+		assert.Error(t, resp.Error(), "401 statusCode")
+		assert.Nil(t, resp.Body())
 	})
 }

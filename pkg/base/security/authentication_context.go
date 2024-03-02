@@ -3,34 +3,32 @@ package security
 import (
 	"context"
 	"fmt"
-
-	"github.com/google/uuid"
 )
 
 // IAuthenticationContext is the external user contract
 type IAuthenticationContext interface {
-	GetUserID() uuid.UUID
-	GetTenantID() uuid.UUID
+	GetUserID() string
+	GetTenantID() string
 }
 
 // AuthenticationContext is the external user struct
 type AuthenticationContext struct {
-	tenantID uuid.UUID
-	userID   uuid.UUID
+	tenantID string
+	userID   string
 }
 
 // NewAuthenticationContext returns a pointer of authentication context
-func NewAuthenticationContext(tenantID, userID uuid.UUID) *AuthenticationContext {
+func NewAuthenticationContext(tenantID, userID string) *AuthenticationContext {
 	return &AuthenticationContext{tenantID, userID}
 }
 
 // GetTenantID returns the tenant id
-func (a *AuthenticationContext) GetTenantID() uuid.UUID {
+func (a *AuthenticationContext) GetTenantID() string {
 	return a.tenantID
 }
 
 // GetUserID returns the user id
-func (a *AuthenticationContext) GetUserID() uuid.UUID {
+func (a *AuthenticationContext) GetUserID() string {
 	return a.userID
 }
 
@@ -54,5 +52,5 @@ func GetAuthenticationContext(ctx context.Context) *AuthenticationContext {
 
 // Valid returns a boolean if the context is valid
 func (a *AuthenticationContext) Valid() bool {
-	return (a.tenantID != uuid.Nil && a.userID != uuid.Nil)
+	return a.tenantID != "" && a.userID != ""
 }

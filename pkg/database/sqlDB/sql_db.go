@@ -88,7 +88,7 @@ func reflectCols(model any) (cols []any) {
 	for i := 0; i < typeOf.NumField(); i++ {
 		field := valueOf.Field(i)
 
-		isStruct, isTime, isNull, isSlice := reflectValueValidations(field)
+		isStruct, isTime, isNull, isSlice = reflectValueValidations(field)
 		if isSlice {
 			cols = append(cols, pq.Array(field.Addr().Interface()))
 		} else if isStruct && !isTime && !isNull {
