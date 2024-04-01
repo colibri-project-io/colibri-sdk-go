@@ -1,6 +1,7 @@
 package restserver
 
 import (
+	"errors"
 	"log"
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
@@ -12,6 +13,9 @@ var (
 	srvRoutes         []Route
 	customMiddlewares []CustomMiddleware
 	srv               Server
+	customAuth        CustomAuthenticationMiddleware
+
+	UserUnauthenticatedError = errors.New("user not authenticated")
 )
 
 // Server is the contract to http server implementation
@@ -27,6 +31,10 @@ type Server interface {
 // AddRoutes add list of routes in the webrest server
 func AddRoutes(routes []Route) {
 	srvRoutes = append(srvRoutes, routes...)
+}
+
+func CustomAuthMiddleware(fn CustomAuthenticationMiddleware) {
+	customAuth = fn
 }
 
 func Use(m CustomMiddleware) {

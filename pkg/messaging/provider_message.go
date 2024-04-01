@@ -12,8 +12,8 @@ type ProviderMessage struct {
 	Id       uuid.UUID   `json:"id"`
 	Origin   string      `json:"origin"`
 	Action   string      `json:"action"`
-	TenantId uuid.UUID   `json:"tenantId"`
-	UserId   uuid.UUID   `json:"userId"`
+	TenantId string      `json:"tenantId"`
+	UserId   string      `json:"userId"`
 	Message  interface{} `json:"message"`
 	n        interface{}
 }
