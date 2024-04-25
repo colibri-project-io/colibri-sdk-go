@@ -1,6 +1,6 @@
 module github.com/colibri-project-io/colibri-sdk-go
 
-go 1.21
+go 1.22
 
 require (
 	cloud.google.com/go/pubsub v1.33.0
@@ -26,7 +26,7 @@ require (
 	github.com/testcontainers/testcontainers-go v0.22.0
 	github.com/valyala/fasthttp v1.51.0
 	go.nhat.io/otelsql v0.12.0
-	go.opentelemetry.io/contrib v1.20.0
+	go.opentelemetry.io/contrib v1.26.0
 	go.opentelemetry.io/otel v1.19.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.19.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.19.0
