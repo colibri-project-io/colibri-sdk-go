@@ -35,7 +35,11 @@ func (f *fiberWebServer) shutdown() error {
 func (f *fiberWebServer) injectMiddlewares() {
 	f.srv.Use(newRelicFiberMiddleware())
 	f.srv.Use(accessControlFiberMiddleware())
-	f.srv.Use(authenticationContextFiberMiddleware())
+	if customAuth != nil {
+		f.srv.Use(customAuthenticationContextFiberMiddleware())
+	} else {
+		f.srv.Use(authenticationContextFiberMiddleware())
+	}
 }
 
 func (f *fiberWebServer) injectCustomMiddlewares() {
