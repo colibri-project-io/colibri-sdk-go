@@ -15,7 +15,7 @@ var (
 	srv               Server
 	customAuth        CustomAuthenticationMiddleware
 
-	UserUnauthenticatedError = errors.New("user not authenticated")
+	errUserUnauthenticated = errors.New("user not authenticated")
 )
 
 // Server is the contract to http server implementation
