@@ -2,10 +2,11 @@ package sqlDB
 
 import (
 	"database/sql"
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/monitoring"
-	"github.com/lib/pq"
 	"reflect"
 	"strings"
+
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/monitoring"
+	"github.com/lib/pq"
 
 	"io"
 
@@ -27,11 +28,16 @@ const (
 
 type sqlDBObserver struct{}
 
-// Close method called when shutdown signal
+// Close finalize sql database connection
 func (o sqlDBObserver) Close() {
-	logging.Info("closing database connection")
+	logging.Info("waiting to safely close the sql database connection")
+	if observer.WaitRunningTimeout() {
+		logging.Warn("WaitGroup timed out, forcing close the sql database connection")
+	}
+
+	logging.Info("closing sql database connection")
 	if err := instance.Close(); err != nil {
-		logging.Error("error when closing database connection: %v", err)
+		logging.Error("error when closing sql database connection: %+v", err)
 	}
 }
 

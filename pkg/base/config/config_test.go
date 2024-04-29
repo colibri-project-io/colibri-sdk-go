@@ -9,25 +9,27 @@ import (
 )
 
 const (
-	invalid_value           = "XYZ"
-	app_name_value          = "TEST APP NAME"
-	app_type_value          = "service"
-	new_relic_license_value = "123456-abcdef-7890-ghi"
-	cloud_value             = "aws"
-	cloud_host_value        = "http://my-cloud-host-fake.com"
-	cloud_region_value      = "test-region"
-	cloud_secret_value      = "test-secret"
-	cloud_token_value       = "test-token"
-	cloud_disable_ssl_value = "true"
-	port_value              = "8081"
-	cache_uri_value         = "my-cache-fake:6379"
-	cache_password_value    = "my-cache-password"
-	sql_db_name_value       = "my-db-name"
-	sql_db_host_value       = "my-db-host"
-	sql_db_port_value       = "1234"
-	sql_db_user_value       = "my-db-user"
-	sql_db_password_value   = "my-db-password"
-	sql_db_ssl_mode_value   = "disable"
+	invalid_value              = "XYZ"
+	app_name_value             = "TEST APP NAME"
+	app_type_value             = "service"
+	new_relic_license_value    = "123456-abcdef-7890-ghi"
+	cloud_value                = "aws"
+	cloud_host_value           = "http://my-cloud-host-fake.com"
+	cloud_region_value         = "test-region"
+	cloud_secret_value         = "test-secret"
+	cloud_token_value          = "test-token"
+	cloud_disable_ssl_value    = "true"
+	port_value                 = "8081"
+	cache_uri_value            = "my-cache-fake:6379"
+	cache_password_value       = "my-cache-password"
+	sql_db_name_value          = "my-db-name"
+	sql_db_host_value          = "my-db-host"
+	sql_db_port_value          = "1234"
+	sql_db_user_value          = "my-db-user"
+	sql_db_password_value      = "my-db-password"
+	sql_db_ssl_mode_value      = "disable"
+	wait_group_timeout         = 400
+	default_wait_group_timeout = 90
 )
 
 func TestEnvironmentProfiles(t *testing.T) {
@@ -200,6 +202,21 @@ func TestCloud(t *testing.T) {
 		Load()
 		assert.Equal(t, CLOUD_FIREBASE, CLOUD)
 	})
+}
+
+func TestWaitGroupTimeout(t *testing.T) {
+	loadTestEnvs(t)
+	t.Run("Should return default value when enviroment is not configured", func(t *testing.T) {
+		assert.Equal(t, default_wait_group_timeout, WAIT_GROUP_TIMEOUT_SECONDS)
+	})
+
+	t.Run("Should return wait group timeout value", func(t *testing.T) {
+		assert.NoError(t, os.Setenv("WAIT_GROUP_TIMEOUT_SECONDS", fmt.Sprintf("%v", wait_group_timeout)))
+
+		Load()
+		assert.Equal(t, wait_group_timeout, WAIT_GROUP_TIMEOUT_SECONDS)
+	})
+
 }
 
 func TestNewRelicKey(t *testing.T) {
