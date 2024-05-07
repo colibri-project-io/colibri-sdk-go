@@ -19,9 +19,9 @@ var services subject
 func Initialize() {
 	ch := make(chan os.Signal, 1)
 	services = &service{
-		observers: make([]Observer, 0),
+		observers: make([]Observer, 0, 0),
 	}
-	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, os.Interrupt)
+	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGKILL, os.Interrupt)
 
 	go func() {
 		sig := <-ch
@@ -43,7 +43,7 @@ func (s *service) attach(observer Observer) {
 	s.observers = append(s.observers, observer)
 }
 
-func (s *service) notify() {
+func (s service) notify() {
 	for _, observer := range s.observers {
 		observer.Close()
 	}

@@ -13,6 +13,11 @@ import (
 type cacheDBObserver struct{}
 
 func (o cacheDBObserver) Close() {
+	logging.Info("waiting to safely close the cache connection")
+	if observer.WaitRunningTimeout() {
+		logging.Warn("WaitGroup timed out, forcing close the cache connection")
+	}
+
 	logging.Info("closing cache connection")
 	if err := instance.Close(); err != nil {
 		logging.Error("error when closing cache connection: %v", err)

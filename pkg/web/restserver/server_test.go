@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/security"
 	"net"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/security"
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/test"
@@ -42,7 +43,7 @@ func (m *customAuthenticationContextMiddleware) Apply(ctx WebContext) (*security
 
 	authHeaders := ctx.RequestHeaders()["Authorization"]
 	if len(authHeaders) < 1 || authHeaders[0] == "" {
-		return nil, UserUnauthenticatedError
+		return nil, errUserUnauthenticated
 	}
 	return security.NewAuthenticationContext("ab123", "123abc"), nil
 

@@ -66,10 +66,11 @@ const (
 )
 
 var (
-	ENVIRONMENT = ""
-	APP_NAME    = ""
-	APP_TYPE    = ""
-	APP_VERSION = ""
+	ENVIRONMENT                = ""
+	APP_NAME                   = ""
+	APP_TYPE                   = ""
+	APP_VERSION                = ""
+	WAIT_GROUP_TIMEOUT_SECONDS = 90 // 1.5 minutes
 
 	NEW_RELIC_LICENSE           = ""
 	OTEL_EXPORTER_OTLP_ENDPOINT = ""
@@ -133,6 +134,10 @@ func Load() error {
 		return err
 	}
 
+	if err := convertIntEnvWithDefault(&WAIT_GROUP_TIMEOUT_SECONDS, "WAIT_GROUP_TIMEOUT_SECONDS", WAIT_GROUP_TIMEOUT_SECONDS); err != nil {
+		return err
+	}
+
 	if err := convertIntEnv(&SQL_DB_MAX_OPEN_CONNS, ENV_SQL_DB_MAX_OPEN_CONNS); err != nil {
 		return err
 	}
@@ -190,6 +195,25 @@ func convertIntEnv(env *int, envName string) error {
 		}
 	}
 	return nil
+}
+
+// convertIntEnvWithDefault loads the value of an environment variable, converts it to interger and insert the result into a pointer.
+func convertIntEnvWithDefault(env *int, envName string, fallback int) error {
+	envString := getEnvWithDefault(envName, fallback)
+	var err error
+	if *env, err = strconv.Atoi(envString); err != nil {
+		return fmt.Errorf(error_integer_parse, envName, envString, err)
+	}
+	return nil
+}
+
+// getEnvWithDefault loads the value of an environment variable.
+func getEnvWithDefault(key string, defaultValue int) string {
+	value, exists := os.LookupEnv(key)
+	if !exists || value == "" {
+		return fmt.Sprintf("%v", defaultValue)
+	}
+	return value
 }
 
 // IsProductionEnvironment returns a boolean if is production environment.

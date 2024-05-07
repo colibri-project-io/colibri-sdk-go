@@ -5,6 +5,7 @@ import (
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/observer"
 )
 
 const (
@@ -20,9 +21,20 @@ type messaging interface {
 	consumer(ctx context.Context, c *consumer) (chan *ProviderMessage, error)
 }
 
-var (
-	instance messaging
-)
+var instance messaging
+
+type messagingObserver struct {
+	closed bool
+}
+
+func (o *messagingObserver) Close() {
+	logging.Info("waiting to safely close messaging module")
+	if observer.WaitRunningTimeout() {
+		logging.Warn("WaitGroup timed out, forcing close the messaging module")
+	}
+
+	o.closed = true
+}
 
 func Initialize() {
 	switch config.CLOUD {
@@ -33,4 +45,5 @@ func Initialize() {
 	}
 
 	logging.Info("Message broker connected")
+	observer.Attach(&messagingObserver{})
 }
