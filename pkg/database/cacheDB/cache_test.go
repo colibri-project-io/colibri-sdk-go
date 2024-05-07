@@ -25,6 +25,7 @@ func TestCacheNotInitializedValidation(t *testing.T) {
 }
 
 func TestCache(t *testing.T) {
+	ctx := context.Background()
 	expected := []userCached{
 		{Id: 1, Name: "User 1"},
 		{Id: 2, Name: "User 2"},
@@ -40,31 +41,31 @@ func TestCache(t *testing.T) {
 		assert.NotNil(t, result.ttl)
 	})
 
-	t.Run("Should return error when cache name is empty value", func(t *testing.T) {
+	t.Run("Should return error when cache name is empty value on call many", func(t *testing.T) {
 		cache := Cache[userCached]{}
 
-		_, err := cache.Many(context.Background())
+		_, err := cache.Many(ctx)
 		assert.NotNil(t, err)
 	})
 
 	t.Run("Should return error when cache name is empty value on call one", func(t *testing.T) {
 		cache := Cache[userCached]{}
 
-		_, err := cache.One(context.Background())
+		_, err := cache.One(ctx)
 		assert.NotNil(t, err)
 	})
 
 	t.Run("Should return error when cache name is empty value on call set", func(t *testing.T) {
 		cache := Cache[userCached]{}
 
-		err := cache.Set(context.Background(), cache)
+		err := cache.Set(ctx, cache)
 		assert.NotNil(t, err)
 	})
 
 	t.Run("Should return error when cache name is empty value on call del", func(t *testing.T) {
 		cache := Cache[userCached]{}
 
-		err := cache.Del(context.Background())
+		err := cache.Del(ctx)
 		assert.NotNil(t, err)
 	})
 
@@ -74,17 +75,17 @@ func TestCache(t *testing.T) {
 			"invalid": make(chan int),
 		}
 
-		err := cache.Set(context.Background(), invalid)
+		err := cache.Set(ctx, invalid)
 		assert.NotNil(t, err)
 	})
 
 	t.Run("Should set many data in cache", func(t *testing.T) {
 		cache := NewCache[userCached]("cache-test", time.Hour)
 
-		err := cache.Set(context.Background(), expected)
+		err := cache.Set(ctx, expected)
 		assert.Nil(t, err)
 
-		result, err := cache.Many(context.Background())
+		result, err := cache.Many(ctx)
 		assert.Nil(t, err)
 		assert.NotNil(t, result)
 		assert.Len(t, result, 3)
@@ -94,10 +95,10 @@ func TestCache(t *testing.T) {
 	t.Run("Should set one data in cache", func(t *testing.T) {
 		cache := NewCache[userCached]("cache-test", time.Hour)
 
-		err := cache.Set(context.Background(), expected[0])
+		err := cache.Set(ctx, expected[0])
 		assert.Nil(t, err)
 
-		result, err := cache.One(context.Background())
+		result, err := cache.One(ctx)
 		assert.Nil(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, expected[0], *result)
@@ -106,20 +107,20 @@ func TestCache(t *testing.T) {
 	t.Run("Should del data in cache", func(t *testing.T) {
 		cache := NewCache[userCached]("cache-test", time.Hour)
 
-		err := cache.Set(context.Background(), expected)
+		err := cache.Set(ctx, expected)
 		assert.Nil(t, err)
 
-		result, err := cache.Many(context.Background())
+		result, err := cache.Many(ctx)
 		assert.Nil(t, err)
 		assert.NotNil(t, result)
 		assert.Len(t, result, 3)
 		assert.Equal(t, expected, result)
 
-		err = cache.Del(context.Background())
+		err = cache.Del(ctx)
 		assert.Nil(t, err)
 
-		result, err = cache.Many(context.Background())
-		assert.NotNil(t, err)
+		result, err = cache.Many(ctx)
+		assert.Nil(t, err)
 		assert.Nil(t, result)
 	})
 }
