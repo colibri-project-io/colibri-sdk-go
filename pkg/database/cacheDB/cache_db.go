@@ -12,20 +12,12 @@ import (
 
 type cacheDBObserver struct{}
 
-func (o cacheDBObserver) Close() {
-	logging.Info("waiting to safely close the cache connection")
-	if observer.WaitRunningTimeout() {
-		logging.Warn("WaitGroup timed out, forcing close the cache connection")
-	}
-
-	logging.Info("closing cache connection")
-	if err := instance.Close(); err != nil {
-		logging.Error("error when closing cache connection: %v", err)
-	}
-}
-
 var instance *redis.Client
 
+// Initialize initializes the cache database connection.
+//
+// No parameters.
+// No return values.
 func Initialize() {
 	opts := &redis.Options{Addr: config.CACHE_URI, Password: config.CACHE_PASSWORD}
 
@@ -36,7 +28,22 @@ func Initialize() {
 	}
 
 	instance = redisClient
-	logging.Info("Cache database connected")
 	observer.Attach(cacheDBObserver{})
 	logging.Info("Cache database connected")
+}
+
+// Close closes the cache connection safely.
+//
+// No parameters.
+// No return values.
+func (o cacheDBObserver) Close() {
+	logging.Info("waiting to safely close the cache connection")
+	if observer.WaitRunningTimeout() {
+		logging.Warn("WaitGroup timed out, forcing close the cache connection")
+	}
+
+	logging.Info("closing cache connection")
+	if err := instance.Close(); err != nil {
+		logging.Error("error when closing cache connection: %v", err)
+	}
 }
