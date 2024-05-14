@@ -2,15 +2,23 @@ package transaction
 
 import "context"
 
-// mockSqlTransaction struct with implements Transaction for tests purpose
+// mockSqlTransaction implements a transaction.Transaction
 type mockSqlTransaction struct {
 }
 
-// NewMockTransaction create a mock transaction for tests purpose
+// NewMockTransaction returns a new mockSqlTransaction.
+//
+// No parameters.
+// Returns a Transaction.
 func NewMockTransaction() Transaction {
 	return mockSqlTransaction{}
 }
 
-func (m mockSqlTransaction) ExecTx(ctx context.Context, fn func(ctx context.Context) error) error {
+// Execute executes a mockSqlTransaction.
+//
+// ctx: The context for the transaction.
+// fn: The function to be executed.
+// Returns an error.
+func (m mockSqlTransaction) Execute(ctx context.Context, fn func(ctx context.Context) error) error {
 	return fn(ctx)
 }
