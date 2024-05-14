@@ -5,388 +5,248 @@ import (
 	"testing"
 	"time"
 
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/test"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/test"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/database/cacheDB"
 )
 
 func TestQueryWithoutInitialize(t *testing.T) {
-	basePath := test.MountAbsolutPath(test.DATABASE_ENVIRONMENT_PATH)
+	ctx := context.Background()
+	sqlDBInstance = nil
 
-	test.InitializeSqlDBTest()
-	pc := test.UsePostgresContainer()
+	t.Run("Should return error when execute query one without params with db not initialized error", func(t *testing.T) {
+		result, err := NewQuery[User](ctx, query_base+" LIMIT 1").One()
 
-	if err := pc.Dataset(basePath, "schema.sql"); err != nil {
-		logging.Fatal(err.Error())
-	}
-
-	instance = nil
-
-	t.Run("One without params", func(t *testing.T) {
-		datasets := []string{"clear-database.sql", "add-users.sql"}
-		err := pc.Dataset(basePath, datasets...)
-		assert.NoError(t, err)
-
-		_, err = NewQuery[User](context.Background(), query_base+" LIMIT 1").One()
 		assert.Error(t, err, db_not_initialized_error)
+		assert.Nil(t, result)
 	})
 
-	t.Run("One with params", func(t *testing.T) {
-		datasets := []string{"clear-database.sql", "add-users.sql"}
-		err := pc.Dataset(basePath, datasets...)
-		assert.NoError(t, err)
+	t.Run("Should return error when execute query one with params with db not initialized error", func(t *testing.T) {
+		result, err := NewQuery[User](ctx, query_base+" WHERE u.id = $1", 1).One()
 
-		_, err = NewQuery[User](context.Background(), query_base+" WHERE u.id = $1", 1).One()
 		assert.Error(t, err, db_not_initialized_error)
+		assert.Nil(t, result)
 	})
 
-	t.Run("Many without params", func(t *testing.T) {
-		datasets := []string{"clear-database.sql", "add-users.sql"}
-		err := pc.Dataset(basePath, datasets...)
-		assert.NoError(t, err)
+	t.Run("Should return error when execute query many without params with db not initialized error", func(t *testing.T) {
+		result, err := NewQuery[User](ctx, query_base).Many()
 
-		_, err = NewQuery[User](context.Background(), query_base).Many()
 		assert.Error(t, err, db_not_initialized_error)
+		assert.Nil(t, result)
 	})
 
-	t.Run("Many with params", func(t *testing.T) {
-		datasets := []string{"clear-database.sql", "add-users.sql"}
-		err := pc.Dataset(basePath, datasets...)
-		assert.NoError(t, err)
+	t.Run("Should return error when execute query many with params with db not initialized error", func(t *testing.T) {
+		result, err := NewQuery[User](ctx, query_base+" WHERE u.name = $1", "ADMIN USER").Many()
 
-		_, err = NewQuery[User](context.Background(), query_base+" WHERE u.name = $1", "ADMIN USER").Many()
 		assert.Error(t, err, db_not_initialized_error)
+		assert.Nil(t, result)
 	})
 }
 
 func TestQuery(t *testing.T) {
-	basePath := test.MountAbsolutPath(test.DATABASE_ENVIRONMENT_PATH)
+	ctx := context.Background()
+	InitializeSqlDBTest()
 
-	test.InitializeSqlDBTest()
-	pc := test.UsePostgresContainer()
+	t.Run("Should return error when execute one without query", func(t *testing.T) {
+		result, err := NewQuery[User](ctx, "").One()
 
-	if err := pc.Dataset(basePath, "schema.sql"); err != nil {
-		logging.Fatal(err.Error())
-	}
-
-	Initialize()
-
-	t.Run("One without query", func(t *testing.T) {
-		datasets := []string{"clear-database.sql", "add-users.sql"}
-		err := pc.Dataset(basePath, datasets...)
-		assert.NoError(t, err)
-
-		ctx := context.Background()
-		_, err = NewQuery[User](ctx, "").One()
 		assert.Error(t, err, query_is_empty_error)
-
+		assert.Nil(t, result)
 	})
 
-	t.Run("One without params", func(t *testing.T) {
-		datasets := []string{"clear-database.sql", "add-users.sql"}
-		err := pc.Dataset(basePath, datasets...)
-		assert.NoError(t, err)
-
-		ctx := context.Background()
+	t.Run("Should execute one without params", func(t *testing.T) {
 		result, err := NewQuery[User](ctx, query_base+" LIMIT 1").One()
+
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, "ADMIN USER", result.Name)
 
 	})
 
-	t.Run("One with params", func(t *testing.T) {
-		datasets := []string{"clear-database.sql", "add-users.sql"}
-		err := pc.Dataset(basePath, datasets...)
-		assert.NoError(t, err)
-
-		ctx := context.Background()
+	t.Run("Should execute one with params", func(t *testing.T) {
 		result, err := NewQuery[User](ctx, query_base+" WHERE u.name = $1", "ADMIN USER").One()
+
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, "ADMIN USER", result.Name)
-
 	})
 
-	t.Run("Many without query", func(t *testing.T) {
-		datasets := []string{"clear-database.sql", "add-users.sql"}
-		err := pc.Dataset(basePath, datasets...)
-		assert.NoError(t, err)
+	t.Run("Should return error when execute many without query", func(t *testing.T) {
+		result, err := NewQuery[User](ctx, "").Many()
 
-		ctx := context.Background()
-		_, err = NewQuery[User](ctx, "").Many()
 		assert.Error(t, err, query_is_empty_error)
+		assert.Nil(t, result)
 	})
 
-	t.Run("Many without params", func(t *testing.T) {
-		datasets := []string{"clear-database.sql", "add-users.sql"}
-		err := pc.Dataset(basePath, datasets...)
-		assert.NoError(t, err)
-
-		ctx := context.Background()
+	t.Run("Should execute many without params", func(t *testing.T) {
 		result, err := NewQuery[User](ctx, query_base).Many()
+
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Len(t, result, 2)
 		assert.Equal(t, "ADMIN USER", result[0].Name)
-
 	})
 
-	t.Run("Many with params", func(t *testing.T) {
-		datasets := []string{"clear-database.sql", "add-users.sql"}
-		err := pc.Dataset(basePath, datasets...)
-		assert.NoError(t, err)
-
-		ctx := context.Background()
+	t.Run("Should execute many with params", func(t *testing.T) {
 		result, err := NewQuery[User](ctx, query_base+" WHERE u.name = $1", "ADMIN USER").Many()
+
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Len(t, result, 1)
 		assert.Equal(t, "ADMIN USER", result[0].Name)
-	})
-
-	t.Run("Many Dogs", func(t *testing.T) {
-		datasets := []string{"clear-database.sql", "add-dogs.sql"}
-		assert.NoError(t, pc.Dataset(basePath, datasets...))
-		query := "SELECT id, name, characteristics FROM dog ORDER BY name"
-		dogs, err := NewQuery[Dog](context.Background(), query).Many()
-		assert.NoError(t, err)
-		assert.Len(t, dogs, 2)
-		assert.Equal(t, dogs[0].Name, "Pitty")
-		assert.Len(t, dogs[0].Characteristics, 2)
-		assert.Equal(t, dogs[0].Characteristics, []string{"mad", "destructive"})
-		assert.Equal(t, dogs[1].Name, "Stella")
-		assert.Len(t, dogs[1].Characteristics, 1)
-		assert.Equal(t, dogs[1].Characteristics, []string{"cute"})
 	})
 }
 
 func TestQueryWithoutCacheDBInitialize(t *testing.T) {
-	basePath := test.MountAbsolutPath(test.DATABASE_ENVIRONMENT_PATH)
+	cache := cacheDB.NewCache[User]("TestQueryWithoutCacheDBInitialize", time.Hour)
+	ctx := context.Background()
+	InitializeSqlDBTest()
 
-	test.InitializeSqlDBTest()
-	pc := test.UsePostgresContainer()
+	t.Run("Should return error when one without params with cache", func(t *testing.T) {
+		dbResult, dbErr := NewCachedQuery(ctx, cache, query_base+" LIMIT 1").One()
+		cacheResult, cacheErr := cache.One(ctx)
 
-	if err := pc.Dataset(basePath, "schema.sql"); err != nil {
-		logging.Fatal(err.Error())
-	}
-
-	Initialize()
-
-	t.Run("One without params with cache", func(t *testing.T) {
-		datasets := []string{"clear-database.sql", "add-users.sql"}
-		err := pc.Dataset(basePath, datasets...)
-		assert.NoError(t, err)
-
-		ctx := context.Background()
-		cache := cacheDB.NewCache[User]("DbTestsOneWithoutParams", time.Hour)
-		result, err := NewCachedQuery(ctx, cache, query_base+" LIMIT 1").One()
-		assert.NoError(t, err)
-		assert.NotNil(t, result)
-		assert.Equal(t, "ADMIN USER", result.Name)
-
-		_, err = cache.One(ctx)
-		assert.Error(t, err, "Cache not initialized")
+		assert.NoError(t, dbErr)
+		assert.NotNil(t, dbResult)
+		assert.Equal(t, "ADMIN USER", dbResult.Name)
+		assert.Error(t, cacheErr, "Cache not initialized")
+		assert.Nil(t, cacheResult)
 	})
 
-	t.Run("One with params with cache", func(t *testing.T) {
-		datasets := []string{"clear-database.sql", "add-users.sql"}
-		err := pc.Dataset(basePath, datasets...)
-		assert.NoError(t, err)
+	t.Run("Should return error when one with params with cache", func(t *testing.T) {
+		dbResult, dbErr := NewCachedQuery(ctx, cache, query_base+" WHERE u.name = $1", "ADMIN USER").One()
+		cacheResult, cacheErr := cache.One(ctx)
 
-		ctx := context.Background()
-		cache := cacheDB.NewCache[User]("DbTestsOneWithoutParams", time.Hour)
-		result, err := NewCachedQuery(ctx, cache, query_base+" WHERE u.name = $1", "ADMIN USER").One()
-		assert.NoError(t, err)
-		assert.NotNil(t, result)
-		assert.Equal(t, "ADMIN USER", result.Name)
-
-		_, err = cache.One(ctx)
-		assert.Error(t, err, "Cache not initialized")
+		assert.NoError(t, dbErr)
+		assert.NotNil(t, dbResult)
+		assert.Equal(t, "ADMIN USER", dbResult.Name)
+		assert.Error(t, cacheErr, "Cache not initialized")
+		assert.Nil(t, cacheResult)
 	})
 
-	t.Run("Many without params with cache", func(t *testing.T) {
-		datasets := []string{"clear-database.sql", "add-users.sql"}
-		err := pc.Dataset(basePath, datasets...)
-		assert.NoError(t, err)
+	t.Run("Should return error when many without params with cache", func(t *testing.T) {
+		dbResult, dbErr := NewCachedQuery(ctx, cache, query_base).Many()
+		cacheResult, cacheErr := cache.Many(ctx)
 
-		ctx := context.Background()
-		cache := cacheDB.NewCache[User]("DbTestsManyWithoutParams", time.Hour)
-		result, err := NewCachedQuery(ctx, cache, query_base).Many()
-		assert.NoError(t, err)
-		assert.NotNil(t, result)
-		assert.Len(t, result, 2)
-		assert.Equal(t, "ADMIN USER", result[0].Name)
-
-		_, err = cache.Many(ctx)
-		assert.Error(t, err, "Cache not initialized")
+		assert.NoError(t, dbErr)
+		assert.NotNil(t, dbResult)
+		assert.Len(t, dbResult, 2)
+		assert.Equal(t, "ADMIN USER", dbResult[0].Name)
+		assert.Error(t, cacheErr, "Cache not initialized")
+		assert.Nil(t, cacheResult)
 	})
 
-	t.Run("Many with params with cache", func(t *testing.T) {
-		datasets := []string{"clear-database.sql", "add-users.sql"}
-		err := pc.Dataset(basePath, datasets...)
-		assert.NoError(t, err)
+	t.Run("Should return error when many with params with cache", func(t *testing.T) {
+		dbResult, dbErr := NewCachedQuery(ctx, cache, query_base+" WHERE u.name = $1", "ADMIN USER").Many()
+		cacheResult, cacheErr := cache.Many(ctx)
 
-		ctx := context.Background()
-		cache := cacheDB.NewCache[User]("DbTestsManyWithoutParams", time.Hour)
-		result, err := NewCachedQuery(ctx, cache, query_base+" WHERE u.name = $1", "ADMIN USER").Many()
-		assert.NoError(t, err)
-		assert.NotNil(t, result)
-		assert.Len(t, result, 1)
-		assert.Equal(t, "ADMIN USER", result[0].Name)
-
-		_, err = cache.Many(ctx)
-		assert.Error(t, err, "Cache not initialized")
+		assert.NoError(t, dbErr)
+		assert.NotNil(t, dbResult)
+		assert.Len(t, dbResult, 1)
+		assert.Equal(t, "ADMIN USER", dbResult[0].Name)
+		assert.Error(t, cacheErr, "Cache not initialized")
+		assert.Nil(t, cacheResult)
 	})
 }
 
 func TestCachedQuery(t *testing.T) {
-	basePath := test.MountAbsolutPath(test.DATABASE_ENVIRONMENT_PATH)
-
+	InitializeSqlDBTest()
 	test.InitializeCacheDBTest()
-	test.InitializeSqlDBTest()
-	pc := test.UsePostgresContainer()
-
-	if err := pc.Dataset(basePath, "schema.sql"); err != nil {
-		logging.Fatal(err.Error())
-	}
-
 	cacheDB.Initialize()
-	Initialize()
 
-	t.Run("One without query with cache", func(t *testing.T) {
-		datasets := []string{"clear-database.sql", "add-users.sql"}
-		err := pc.Dataset(basePath, datasets...)
-		assert.NoError(t, err)
+	cache := cacheDB.NewCache[User]("TestCachedQuery", time.Hour)
+	ctx := context.Background()
 
-		ctx := context.Background()
-		cache := cacheDB.NewCache[User]("DbTestsOneWithoutQuery", time.Hour)
-		cacheInitialData, err := cache.One(ctx)
-		assert.NotNil(t, err)
-		assert.Nil(t, cacheInitialData)
+	t.Run("Should return error when one without query with cache", func(t *testing.T) {
+		cacheInitialData, cacheInitialErr := cache.One(ctx)
+		result, err := NewCachedQuery(ctx, cache, "").One()
 
-		_, err = NewCachedQuery(ctx, cache, "").One()
+		assert.NoError(t, cacheInitialErr)
 		assert.Error(t, err, query_is_empty_error)
+		assert.Nil(t, cacheInitialData)
+		assert.Nil(t, result)
 	})
 
-	t.Run("One without params with cache", func(t *testing.T) {
-		datasets := []string{"clear-database.sql", "add-users.sql"}
-		err := pc.Dataset(basePath, datasets...)
-		assert.NoError(t, err)
-
-		ctx := context.Background()
-		cache := cacheDB.NewCache[User]("DbTestsOneWithoutParams", time.Hour)
-		cacheInitialData, err := cache.One(ctx)
-		assert.NotNil(t, err)
-		assert.Nil(t, cacheInitialData)
-
+	t.Run("Should execute one without params with cache", func(t *testing.T) {
+		cacheInitialData, cacheInitialErr := cache.One(ctx)
 		result, err := NewCachedQuery(ctx, cache, query_base+" LIMIT 1").One()
+		cacheFinalData, cacheFinalErr := cache.One(ctx)
+		cacheDelErr := cache.Del(ctx)
+
+		assert.NoError(t, cacheInitialErr)
+		assert.Nil(t, cacheInitialData)
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, "ADMIN USER", result.Name)
-
-		cacheFinalData, err := cache.One(ctx)
-		assert.Nil(t, err)
+		assert.NoError(t, cacheFinalErr)
 		assert.NotNil(t, cacheFinalData)
 		assert.Equal(t, "ADMIN USER", cacheFinalData.Name)
-
-		err = cache.Del(ctx)
-		assert.Nil(t, err)
+		assert.NoError(t, cacheDelErr)
 	})
 
-	t.Run("One with params with cache", func(t *testing.T) {
-		datasets := []string{"clear-database.sql", "add-users.sql"}
-		err := pc.Dataset(basePath, datasets...)
-		assert.NoError(t, err)
-
-		ctx := context.Background()
-		cache := cacheDB.NewCache[User]("DbTestsOneWithoutParams", time.Hour)
-		cacheInitialData, err := cache.One(ctx)
-		assert.NotNil(t, err)
-		assert.Nil(t, cacheInitialData)
-
+	t.Run("Should execute one with params with cache", func(t *testing.T) {
+		cacheInitialData, cacheInitialErr := cache.One(ctx)
 		result, err := NewCachedQuery(ctx, cache, query_base+" WHERE u.name = $1", "ADMIN USER").One()
+		cacheFinalData, cacheFinalErr := cache.One(ctx)
+		cacheDelErr := cache.Del(ctx)
+
+		assert.NoError(t, cacheInitialErr)
+		assert.Nil(t, cacheInitialData)
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, "ADMIN USER", result.Name)
-
-		cacheFinalData, err := cache.One(ctx)
-		assert.Nil(t, err)
+		assert.NoError(t, cacheFinalErr)
 		assert.NotNil(t, cacheFinalData)
 		assert.Equal(t, "ADMIN USER", cacheFinalData.Name)
-
-		err = cache.Del(ctx)
-		assert.Nil(t, err)
+		assert.NoError(t, cacheDelErr)
 	})
 
-	t.Run("Many without query with cache", func(t *testing.T) {
-		datasets := []string{"clear-database.sql", "add-users.sql"}
-		err := pc.Dataset(basePath, datasets...)
-		assert.NoError(t, err)
+	t.Run("Should return error when many without query with cache", func(t *testing.T) {
+		cacheInitialData, cacheInitialErr := cache.One(ctx)
+		result, err := NewCachedQuery(ctx, cache, "").Many()
 
-		ctx := context.Background()
-		cache := cacheDB.NewCache[User]("DbTestsManyWithoutQuery", time.Hour)
-		cacheInitialData, err := cache.One(ctx)
-		assert.NotNil(t, err)
+		assert.NoError(t, cacheInitialErr)
 		assert.Nil(t, cacheInitialData)
-
-		_, err = NewCachedQuery(ctx, cache, "").Many()
 		assert.Error(t, err, query_is_empty_error)
+		assert.Nil(t, result)
 	})
 
-	t.Run("Many without params with cache", func(t *testing.T) {
-		datasets := []string{"clear-database.sql", "add-users.sql"}
-		err := pc.Dataset(basePath, datasets...)
-		assert.NoError(t, err)
-
-		ctx := context.Background()
-		cache := cacheDB.NewCache[User]("DbTestsManyWithoutParams", time.Hour)
-		cacheInitialData, err := cache.One(ctx)
-		assert.NotNil(t, err)
-		assert.Nil(t, cacheInitialData)
-
+	t.Run("Should execute many without params with cache", func(t *testing.T) {
+		cacheInitialData, cacheInitialErr := cache.One(ctx)
 		result, err := NewCachedQuery(ctx, cache, query_base).Many()
+		cacheFinalData, cacheFinalErr := cache.Many(ctx)
+		cacheDelErr := cache.Del(ctx)
+
+		assert.NoError(t, cacheInitialErr)
+		assert.Nil(t, cacheInitialData)
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Len(t, result, 2)
 		assert.Equal(t, "ADMIN USER", result[0].Name)
-
-		cacheFinalData, err := cache.Many(ctx)
-		assert.Nil(t, err)
+		assert.NoError(t, cacheFinalErr)
 		assert.NotNil(t, cacheFinalData)
 		assert.Len(t, result, 2)
 		assert.Equal(t, "ADMIN USER", result[0].Name)
-
-		err = cache.Del(ctx)
-		assert.Nil(t, err)
+		assert.NoError(t, cacheDelErr)
 	})
 
-	t.Run("Many with params with cache", func(t *testing.T) {
-		datasets := []string{"clear-database.sql", "add-users.sql"}
-		err := pc.Dataset(basePath, datasets...)
-		assert.NoError(t, err)
-
-		ctx := context.Background()
-		cache := cacheDB.NewCache[User]("DbTestsManyWithoutParams", time.Hour)
-		cacheInitialData, err := cache.One(ctx)
-		assert.NotNil(t, err)
-		assert.Nil(t, cacheInitialData)
-
+	t.Run("Should execute many with params with cache", func(t *testing.T) {
+		cacheInitialData, cacheInitialErr := cache.One(ctx)
 		result, err := NewCachedQuery(ctx, cache, query_base+" WHERE u.name = $1", "ADMIN USER").Many()
+		cacheFinalData, cacheFinalErr := cache.Many(ctx)
+		cacheDelErr := cache.Del(ctx)
+
+		assert.NoError(t, cacheInitialErr)
+		assert.Nil(t, cacheInitialData)
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Len(t, result, 1)
 		assert.Equal(t, "ADMIN USER", result[0].Name)
-
-		cacheFinalData, err := cache.Many(ctx)
-		assert.Nil(t, err)
+		assert.NoError(t, cacheFinalErr)
 		assert.NotNil(t, cacheFinalData)
 		assert.Len(t, result, 1)
 		assert.Equal(t, "ADMIN USER", result[0].Name)
-
-		err = cache.Del(ctx)
-		assert.Nil(t, err)
+		assert.NoError(t, cacheDelErr)
 	})
 }

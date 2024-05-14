@@ -2,6 +2,9 @@ package sqlDB
 
 import (
 	"time"
+
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/test"
 )
 
 const (
@@ -24,4 +27,20 @@ type Dog struct {
 	ID              uint
 	Name            string
 	Characteristics []string
+}
+
+func InitializeSqlDBTest() {
+	basePath := test.MountAbsolutPath(test.DATABASE_ENVIRONMENT_PATH)
+
+	test.InitializeSqlDBTest()
+	pc := test.UsePostgresContainer()
+
+	if err := pc.Dataset(basePath, "schema.sql"); err != nil {
+		logging.Fatal(err.Error())
+	}
+
+	datasets := []string{"clear-database.sql", "add-users.sql", "add-contacts.sql", "add-dogs.sql"}
+	pc.Dataset(basePath, datasets...)
+
+	Initialize()
 }

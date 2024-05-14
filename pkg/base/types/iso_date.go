@@ -9,17 +9,54 @@ import (
 // IsoDate struct
 type IsoDate time.Time
 
-// Value converts iso date to sql driver value
+// ParseIsoDate converts string to iso date.
+//
+// It takes a string value as input.
+// Returns IsoDate and an error.
+func ParseIsoDate(value string) (IsoDate, error) {
+	parsedDate, err := time.Parse(time.DateOnly, value)
+	if err != nil {
+		return IsoDate{}, err
+	}
+
+	return IsoDate(parsedDate), nil
+}
+
+// Value converts iso date to sql driver value.
+//
+// Returns driver.Value and an error.
 func (t IsoDate) Value() (driver.Value, error) {
 	return time.Time(t), nil
 }
 
-// MarshalJSON converts iso date to json string format
+// String returns the iso date formatted using the format string.
+//
+// No parameters.
+// Returns a string.
+func (t IsoDate) String() string {
+	return time.Time(t).Format(time.DateOnly)
+}
+
+// GoString returns the iso date in Go source code format string.
+//
+// No parameters.
+// Returns a string.
+func (t IsoDate) GoString() string {
+	return time.Time(t).GoString()
+}
+
+// MarshalJSON converts iso date to json string format.
+//
+// No parameters.
+// Returns a byte slice and an error.
 func (t IsoDate) MarshalJSON() ([]byte, error) {
 	return json.Marshal(time.Time(t).Format(time.DateOnly))
 }
 
-// UnmarshalJSON converts json string to iso date
+// UnmarshalJSON converts json string to iso date.
+//
+// It takes a byte slice as the input data.
+// Returns an error.
 func (t *IsoDate) UnmarshalJSON(data []byte) error {
 	var ptr *string
 	if err := json.Unmarshal(data, &ptr); err != nil {

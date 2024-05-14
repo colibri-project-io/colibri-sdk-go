@@ -1,3 +1,3 @@
 delete from users;
 delete from profiles;
-delete from dog;
+delete from contacts;

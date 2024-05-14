@@ -3,29 +3,20 @@ package sqlDB
 import (
 	"context"
 	"database/sql"
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/test"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSqlTransactionWithoutInitialize(t *testing.T) {
-	basePath := test.MountAbsolutPath("../../../development-environment/database/sql-tx/")
+	sqlDBInstance = nil
+	ctx := context.Background()
 
-	test.InitializeSqlDBTest()
-	pc := test.UsePostgresContainer()
+	t.Run("Should return error when instance is nil", func(t *testing.T) {
+		err := NewStatement(ctx, "", "Contact Name 1", "em@il.com").Execute()
 
-	if err := pc.Dataset(basePath, "schema.sql"); err != nil {
-		logging.Fatal(err.Error())
-	}
-
-	instance = nil
-
-	stmt1 := NewStatement(context.Background(), "", "Contact Name 1", "em@il.com")
-	err := stmt1.Execute()
-
-	assert.Error(t, err, db_not_initialized_error)
+		assert.Error(t, err, db_not_initialized_error)
+	})
 }
 
 func TestSqlTransaction(t *testing.T) {
@@ -34,114 +25,90 @@ func TestSqlTransaction(t *testing.T) {
 		Email string
 	}
 
-	basePath := test.MountAbsolutPath("../../../development-environment/database/sql-tx/")
-
-	test.InitializeSqlDBTest()
-	pc := test.UsePostgresContainer()
-
-	Initialize()
-
-	if err := pc.Dataset(basePath, "schema.sql"); err != nil {
-		logging.Fatal(err.Error())
-	}
+	ctx := context.Background()
+	InitializeSqlDBTest()
 
 	t.Run("Should return error when query is nil", func(t *testing.T) {
-		if err := pc.Dataset(basePath, "clear.sql"); err != nil {
-			logging.Fatal(err.Error())
-		}
-
-		stmt := NewStatement(context.Background(), "", "Contact Name 1", "em@il.com")
-		err := stmt.Execute()
+		err := NewStatement(ctx, "", "Contact Name 1", "em@il.com").Execute()
 
 		assert.Error(t, err, query_is_empty_error)
 	})
 
-	t.Run("commit ok", func(t *testing.T) {
-		if err := pc.Dataset(basePath, "clear.sql"); err != nil {
-			logging.Fatal(err.Error())
-		}
-
-		tx := NewTransaction()
-		err := tx.ExecTx(context.Background(), func(ctx context.Context) error {
+	t.Run("Should execute transaction and commit", func(t *testing.T) {
+		transaction := NewTransaction()
+		err := transaction.Execute(ctx, func(ctx context.Context) error {
 			insertContact1 := "INSERT INTO contacts (name, email) VALUES ($1, $2) "
-			stmt1 := NewStatement(ctx, insertContact1, "Contact Name 1", "em@il.com")
+			stmt1 := NewStatement(ctx, insertContact1, "Contact Name 1 with Commit", "email1@email.com")
 			if err := stmt1.Execute(); err != nil {
 				return err
 			}
 
 			insertContact2 := "INSERT INTO contacts (name, email) VALUES ($1, $2) "
-			stmt2 := NewStatement(ctx, insertContact2, "Contact Name 2", "2em@il.com")
+			stmt2 := NewStatement(ctx, insertContact2, "Contact Name 2 with commit", "email2@email.com")
 			if err := stmt2.Execute(); err != nil {
 				return err
 			}
 
 			return nil
 		})
-		assert.NoError(t, err)
+		query1Result, query1Err := NewQuery[contact](ctx, "SELECT name, email FROM contacts WHERE email = $1", "email1@email.com").One()
+		query2Result, query2Err := NewQuery[contact](ctx, "SELECT name, email FROM contacts WHERE email = $1", "email2@email.com").One()
 
-		q1 := NewQuery[contact](context.Background(), "SELECT name, email FROM contacts WHERE email = $1", "em@il.com")
-		c1, err := q1.One()
 		assert.NoError(t, err)
-		assert.NotNil(t, c1)
-		assert.Equal(t, "em@il.com", c1.Email)
-
-		q2 := NewQuery[contact](context.Background(), "SELECT name, email FROM contacts WHERE email = $1", "2em@il.com")
-		c2, err := q2.One()
-		assert.NoError(t, err)
-		assert.NotNil(t, c2)
-		assert.Equal(t, "2em@il.com", c2.Email)
+		assert.NoError(t, query1Err)
+		assert.NotNil(t, query1Result)
+		assert.Equal(t, "email1@email.com", query1Result.Email)
+		assert.NoError(t, query2Err)
+		assert.NotNil(t, query2Result)
+		assert.Equal(t, "email2@email.com", query2Result.Email)
 	})
 
-	t.Run("fail with rollback", func(t *testing.T) {
-		if err := pc.Dataset(basePath, "clear.sql"); err != nil {
-			logging.Fatal(err.Error())
-		}
-
-		q1 := NewQuery[contact](context.Background(), "SELECT name, email FROM contacts WHERE email = $1", "em@il.com")
-		c1, err := q1.One()
-		assert.NoError(t, err)
-		assert.Nil(t, c1)
-
-		tx := NewTransaction()
-		err = tx.ExecTx(context.Background(), func(ctx context.Context) error {
+	t.Run("Should execute transaction with fail and rollback", func(t *testing.T) {
+		transaction := NewTransaction()
+		query1Result, query1Err := NewQuery[contact](ctx, "SELECT name, email FROM contacts WHERE email = $1", "email2@email.com").One()
+		err := transaction.Execute(ctx, func(ctx context.Context) error {
 			insertContact1 := "INSERT INTO contacts (name, email) VALUES ($1, $2) "
-			stmt1 := NewStatement(ctx, insertContact1, "Contact Name 1", "em@il.com")
+			stmt1 := NewStatement(ctx, insertContact1, "Contact Name 1 with fail", "email1-with-fail@email.com")
 			if err := stmt1.Execute(); err != nil {
 				return err
 			}
 
 			insertContact2 := "INSERT INTO contacts (name, email) VALUES ($1, $2) "
-			stmt2 := NewStatement(ctx, insertContact2, "Contact Name 2", "em@il.com")
+			stmt2 := NewStatement(ctx, insertContact2, "Contact Name 2 with fail", "email2@email.com")
 			if err := stmt2.Execute(); err != nil {
 				return err
 			}
 
 			return nil
 		})
-		assert.Error(t, err)
+		query2Result, query2Err := NewQuery[contact](ctx, "SELECT name, email FROM contacts WHERE email = $1", "email1-with-fail@email.com").One()
 
-		q1 = NewQuery[contact](context.Background(), "SELECT name, email FROM contacts WHERE email = $1", "em@il.com")
-		c1, err = q1.One()
-		assert.NoError(t, err)
-		assert.Nil(t, c1)
+		assert.NoError(t, query1Err)
+		assert.NotNil(t, query1Result)
+		assert.Error(t, err)
+		assert.NoError(t, query2Err)
+		assert.Nil(t, query2Result)
 	})
 }
 
-func TestSqlTransaction_isolationLevel(t *testing.T) {
-	t.Run("isolation level default", func(t *testing.T) {
+func TestSqlTransactionIsolationLevel(t *testing.T) {
+	t.Run("Should return isolation level default", func(t *testing.T) {
 		tx := NewTransaction()
+
 		assert.NotNil(t, tx)
 		assert.Equal(t, sql.LevelDefault, tx.(*sqlTransaction).isolation)
 	})
 
-	t.Run("isolation level serializable", func(t *testing.T) {
+	t.Run("Should return isolation level serializable", func(t *testing.T) {
 		tx := NewTransaction(sql.LevelSerializable)
+
 		assert.NotNil(t, tx)
 		assert.Equal(t, sql.LevelSerializable, tx.(*sqlTransaction).isolation)
 	})
 
-	t.Run("multiple isolations, only first is used", func(t *testing.T) {
+	t.Run("Should return multiple isolations, only first is used", func(t *testing.T) {
 		tx := NewTransaction(sql.LevelLinearizable, sql.LevelSerializable)
+
 		assert.NotNil(t, tx)
 		assert.Equal(t, sql.LevelLinearizable, tx.(*sqlTransaction).isolation)
 	})

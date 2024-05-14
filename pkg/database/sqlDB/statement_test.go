@@ -5,72 +5,41 @@ import (
 	"testing"
 	"time"
 
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/test"
-
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestStatementWithoutInitialize(t *testing.T) {
-	basePath := test.MountAbsolutPath(test.DATABASE_ENVIRONMENT_PATH)
+	ctx := context.Background()
+	sqlDBInstance = nil
 
-	test.InitializeSqlDBTest()
-	pc := test.UsePostgresContainer()
-
-	if err := pc.Dataset(basePath, "schema.sql"); err != nil {
-		logging.Fatal(err.Error())
-	}
-
-	instance = nil
-
-	t.Run("Statement", func(t *testing.T) {
-		datasets := []string{"clear-database.sql", "add-users.sql"}
-		err := pc.Dataset(basePath, datasets...)
-		assert.NoError(t, err)
-
-		ctx := context.Background()
+	t.Run("Should return error when execute statement", func(t *testing.T) {
 		birth, _ := time.Parse("2006-01-02", "2021-11-22")
 		user := User{123, "Usuário teste stmt", birth, Profile{100, "ADMIN"}}
-		err = NewStatement(ctx, "INSERT INTO users VALUES ($1, $2, $3, $4)", user.Id, user.Name, user.Birthday, user.Profile.Id).Execute()
+
+		err := NewStatement(ctx, "INSERT INTO users VALUES ($1, $2, $3, $4)", user.Id, user.Name, user.Birthday, user.Profile.Id).Execute()
+
 		assert.Error(t, err, db_not_initialized_error)
 	})
 }
 
 func TestStatement(t *testing.T) {
-	basePath := test.MountAbsolutPath(test.DATABASE_ENVIRONMENT_PATH)
+	InitializeSqlDBTest()
+	ctx := context.Background()
 
-	test.InitializeSqlDBTest()
-	pc := test.UsePostgresContainer()
+	t.Run("Should return error when execute statement without query", func(t *testing.T) {
+		err := NewStatement(ctx, "").Execute()
 
-	if err := pc.Dataset(basePath, "schema.sql"); err != nil {
-		logging.Fatal(err.Error())
-	}
-
-	Initialize()
-
-	t.Run("Statement without query", func(t *testing.T) {
-		datasets := []string{"clear-database.sql", "add-users.sql"}
-		err := pc.Dataset(basePath, datasets...)
-		assert.NoError(t, err)
-
-		ctx := context.Background()
-		err = NewStatement(ctx, "").Execute()
 		assert.Error(t, err, query_is_empty_error)
 	})
 
-	t.Run("Statement", func(t *testing.T) {
-		datasets := []string{"clear-database.sql", "add-users.sql"}
-		err := pc.Dataset(basePath, datasets...)
-		assert.NoError(t, err)
-
-		ctx := context.Background()
+	t.Run("Should execute statement", func(t *testing.T) {
 		birth, _ := time.Parse("2006-01-02", "2021-11-22")
 		user := User{123, "Usuário teste stmt", birth, Profile{100, "ADMIN"}}
-		err = NewStatement(ctx, "INSERT INTO users VALUES ($1, $2, $3, $4)", user.Id, user.Name, user.Birthday, user.Profile.Id).Execute()
-		assert.NoError(t, err)
 
+		statementErr := NewStatement(ctx, "INSERT INTO users VALUES ($1, $2, $3, $4)", user.Id, user.Name, user.Birthday, user.Profile.Id).Execute()
 		result, err := NewQuery[User](ctx, query_base+" WHERE u.id = $1", user.Id).One()
 
+		assert.NoError(t, statementErr)
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, user.Id, result.Id)

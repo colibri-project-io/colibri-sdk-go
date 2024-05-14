@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMockTransaction(t *testing.T) {
@@ -13,7 +14,7 @@ func TestMockTransaction(t *testing.T) {
 		f := func(ctx context.Context) error { return nil }
 		m := NewMockTransaction()
 
-		assert.NoError(t, m.ExecTx(context.Background(), f))
+		assert.NoError(t, m.Execute(context.Background(), f))
 	})
 
 	t.Run("execute with error", func(t *testing.T) {
@@ -23,6 +24,6 @@ func TestMockTransaction(t *testing.T) {
 		}
 		m := NewMockTransaction()
 
-		assert.ErrorIs(t, m.ExecTx(context.Background(), f), expectedErr)
+		assert.ErrorIs(t, m.Execute(context.Background(), f), expectedErr)
 	})
 }
