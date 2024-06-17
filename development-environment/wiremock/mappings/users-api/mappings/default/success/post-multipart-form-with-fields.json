@@ -1,0 +1,31 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "POST",
+    "urlPattern": "/users-api/v1",
+    "headers": {
+      "Content-Type": {
+        "matches": "multipart/form-data;\\s*boundary=[^\\s]+"
+      }
+    },
+    "bodyPatterns": [
+      {
+        "matches": ".+Content-Disposition: form-data; name=\"name\".*User 100.+"
+      },
+      {
+        "matches": ".+Content-Disposition: form-data; name=\"email\".*user_100@email.com.+"
+      }
+    ]
+  },
+  "response": {
+    "status": 201,
+    "headers": {
+      "Content-Type": "application/json; charset=utf-8"
+    },
+    "jsonBody": {
+      "id": 10,
+      "name": "User 100",
+      "email": "user_100@email.com"
+    }
+  }
+}

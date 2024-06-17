@@ -1,0 +1,27 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "POST",
+    "urlPattern": "/token",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "id": 10,
+          "name": "User 10",
+          "email": "user_10@email.com"
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json; charset=utf-8"
+    },
+    "jsonBody": {
+      "type": "Bearer",
+      "token": "1A2B3C4D5E",
+      "expiresIn": 123456789
+    }
+  }
+}

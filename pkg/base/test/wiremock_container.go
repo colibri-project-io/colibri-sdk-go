@@ -5,13 +5,15 @@ import (
 	"fmt"
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/google/uuid"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 const (
-	wiremockDockerImage = "wiremock/wiremock:2.32.0-alpine"
+	wiremockDockerImage = "wiremock/wiremock:3.3.1-alpine"
 	wiremockSvcPort     = "8080"
 )
 
@@ -34,12 +36,17 @@ func UseWiremockContainer(configPath string) *WiremockContainer {
 
 func newWiremockContainer(configPath string) *WiremockContainer {
 	req := testcontainers.ContainerRequest{
-		Image:        wiremockDockerImage,
-		Name:         fmt.Sprintf("colibri-project-test-wiremock-%s", uuid.New().String()),
-		ExposedPorts: []string{wiremockSvcPort},
-		Env:          map[string]string{},
-		Mounts: testcontainers.ContainerMounts{
-			testcontainers.ContainerMount{Source: testcontainers.GenericBindMountSource{HostPath: configPath}, Target: "/home/wiremock"},
+		Image:         wiremockDockerImage,
+		ImagePlatform: "linux/amd64",
+		Name:          fmt.Sprintf("colibri-project-test-wiremock-%s", uuid.New().String()),
+		ExposedPorts:  []string{wiremockSvcPort},
+		Env:           map[string]string{},
+		HostConfigModifier: func(hostConfig *container.HostConfig) {
+			hostConfig.Mounts = append(hostConfig.Mounts, mount.Mount{
+				Type:   mount.TypeBind,
+				Source: configPath,
+				Target: "/home/wiremock",
+			})
 		},
 		Cmd:        []string{"--local-response-templating"},
 		WaitingFor: wait.ForListeningPort(wiremockSvcPort),
@@ -61,7 +68,7 @@ func (c *WiremockContainer) start() {
 
 	runningPort, _ := c.wContainer.MappedPort(ctx, wiremockSvcPort)
 	c.instancePort = runningPort.Int()
-	logging.Info("Wiremock container exposed port: %s", runningPort.Port())
+	logging.Info("Test wiremock started at port: %s", runningPort.Port())
 }
 
 func (c *WiremockContainer) Port() int {

@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	postgresDockerImage = "postgres:14-alpine"
+	postgresDockerImage = "postgres:16-alpine"
 	testDbHost          = "localhost"
 	testDbName          = "test_db"
 	testDbUser          = "test_user"
@@ -88,7 +88,7 @@ func (c *PostgresContainer) start() {
 		logging.Fatal(err.Error())
 	}
 
-	log.Printf("Test database started at port: %s", testDbPort)
+	log.Printf("Test postgres started at port: %s", testDbPort)
 	c.setDatabaseEnv(testDbPort)
 	databaseURL := fmt.Sprintf(config.SQL_DB_CONNECTION_URI_DEFAULT,
 		os.Getenv(config.ENV_SQL_DB_HOST),

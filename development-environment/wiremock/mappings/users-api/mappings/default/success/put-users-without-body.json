@@ -1,0 +1,22 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "PUT",
+    "urlPattern": "/users-api/v1/users/100",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "id": 100,
+          "name": "User 100 edited",
+          "email": "user_100@email.com"
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 204,
+    "headers": {
+      "Content-Length": "0"
+    }
+  }
+}

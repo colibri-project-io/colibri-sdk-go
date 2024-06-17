@@ -1,0 +1,17 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "PATCH",
+    "urlPattern": "/users-api/v1/users/100",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "name": "User 100 edited"
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 204
+  }
+}

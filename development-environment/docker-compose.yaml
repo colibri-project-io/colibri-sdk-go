@@ -2,7 +2,7 @@ version: "3"
 
 services:
   wiremock:
-    image: wiremock/wiremock:2.32.0-alpine
+    image: wiremock/wiremock:3.3.1-alpine
     command: "--local-response-templating"
     ports:
       - "5050:8080"
@@ -12,19 +12,18 @@ services:
       - dev
 
   localstack:
-    image: localstack/localstack:1.4
+    image: localstack/localstack:3.1
     ports:
       - "127.0.0.1:4510-4559:4510-4559"  # external service port range
       - "127.0.0.1:4566:4566"            # LocalStack Edge Proxy
     environment:
-      - DEBUG=${DEBUG-}
-      - SERVICES=sns,sqs,s3,dynamodb
-      - DATA_DIR=${DATA_DIR-}
-      - LAMBDA_EXECUTOR=${LAMBDA_EXECUTOR-}
-      - HOST_TMP_FOLDER=${TMPDIR:-/tmp/}localstack
+      - DEBUG=${DEBUG:-0}
+      - SERVICES=sns,sqs,s3
       - DOCKER_HOST=unix:///var/run/docker.sock
     volumes:
+      - "${TMPDIR:-/tmp}/localstack:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+      - ./localstack/start-localstack.sh:/etc/localstack/init/ready.d/start-localstack.sh
     networks:
       - dev
 

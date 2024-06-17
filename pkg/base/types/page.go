@@ -11,25 +11,6 @@ type Page[T any] struct {
 	TotalElements uint64 `json:"totalElements"`
 }
 
-// SortDirection is the field sort direction
-type SortDirection string
-
-const (
-	ASC  SortDirection = "ASC"
-	DESC SortDirection = "DESC"
-)
-
-// Sort is the contract to sort an field
-type Sort struct {
-	Direction SortDirection
-	Field     string
-}
-
-// NewSort returns a new Sort
-func NewSort(direction SortDirection, field string) Sort {
-	return Sort{direction, field}
-}
-
 // PageRequest is the contract of request page
 type PageRequest struct {
 	Page  uint16
