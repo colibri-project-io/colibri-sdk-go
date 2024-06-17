@@ -57,6 +57,7 @@ func beforeEnterApply(ctx WebContext) *MiddlewareError {
 }
 
 func TestStartRestServer(t *testing.T) {
+	ctx := context.Background()
 	test.InitializeBaseTest()
 
 	type Resp struct {
@@ -269,204 +270,418 @@ func TestStartRestServer(t *testing.T) {
 	Use(&customMiddlewareTest{})
 	go ListenAndServe()
 	time.Sleep(1 * time.Second)
-	client := restclient.NewRestClient("test-server", fmt.Sprintf("http://localhost:%d", config.PORT), 1)
+
+	baseURL := fmt.Sprintf("http://localhost:%d", config.PORT)
+	client := restclient.NewRestClient(&restclient.RestClientConfig{
+		Name:    "test-server",
+		BaseURL: baseURL,
+		Timeout: 100,
+	})
 
 	t.Run("Should return status 200 (OK) in health-check", func(t *testing.T) {
-		resp := restclient.Get[healtCheck](context.Background(), client, "/management/health", nil)
-		assert.NotNil(t, resp)
-		assert.NoError(t, resp.Error())
-		assert.Equal(t, "OK", resp.Body().Status)
+		response := restclient.Request[healtCheck, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodGet,
+			Path:       "/health",
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusOK, response.StatusCode())
+		assert.Equal(t, "OK", response.SuccessBody().Status)
+		assert.Nil(t, response.ErrorBody())
+		assert.NoError(t, response.Error())
 	})
 
 	t.Run("Should return error 404 (not found) when endpoint not exists", func(t *testing.T) {
-		resp := restclient.Get[Resp](context.Background(), client, "/not-exists-endpoint", nil)
-		assert.NotNil(t, resp)
-		assert.Error(t, resp.Error(), "404 statusCode")
-		assert.Nil(t, resp.Body())
+		response := restclient.Request[Resp, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodGet,
+			Path:       "/not-exists-endpoint",
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusNotFound, response.StatusCode())
+		assert.Nil(t, response.SuccessBody())
+		assert.Nil(t, response.ErrorBody())
+		assert.Error(t, response.Error(), "404 staus code")
 	})
 
 	t.Run("Should return 200 (OK) in public api", func(t *testing.T) {
-		resp := restclient.Get[Resp](context.Background(), client, "/public/test-public-endpoint", nil)
-		assert.NotNil(t, resp)
-		assert.NoError(t, resp.Error())
-		assert.NotNil(t, resp.Body())
-		assert.Equal(t, "test-public-endpoint", resp.Body().Msg)
+		response := restclient.Request[Resp, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodGet,
+			Path:       "/public/test-public-endpoint",
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusOK, response.StatusCode())
+		assert.NotNil(t, response.SuccessBody())
+		assert.Equal(t, "test-public-endpoint", response.SuccessBody().Msg)
+		assert.Nil(t, response.ErrorBody())
+		assert.NoError(t, response.Error())
 	})
 
 	t.Run("Should return 200 (OK) in private api", func(t *testing.T) {
-		resp := restclient.Get[Resp](context.Background(), client, "/private/test-private-endpoint/abc", nil)
-		assert.NotNil(t, resp)
-		assert.NoError(t, resp.Error())
-		assert.NotNil(t, resp.Body())
-		assert.Equal(t, "abc", resp.Body().Msg)
+		response := restclient.Request[Resp, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodGet,
+			Path:       "/private/test-private-endpoint/abc",
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusOK, response.StatusCode())
+		assert.NotNil(t, response.SuccessBody())
+		assert.Equal(t, "abc", response.SuccessBody().Msg)
+		assert.Nil(t, response.ErrorBody())
+		assert.NoError(t, response.Error())
 	})
 
 	t.Run("Should return error 401 (Unauthorized) when not inform the userId in authenticated api", func(t *testing.T) {
-		r := restclient.Get[Resp](context.Background(), client, "/api/test-authenticated-endpoint/abc", map[string]string{tenantIDHeader: TenantId})
-		assert.NotNil(t, r)
-		assert.Error(t, r.Error(), "401 statusCode")
-		assert.Nil(t, r.Body())
+		response := restclient.Request[Resp, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodGet,
+			Path:       "/api/test-authenticated-endpoint/abc",
+			Headers:    map[string]string{tenantIDHeader: TenantId},
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusUnauthorized, response.StatusCode())
+		assert.Nil(t, response.SuccessBody())
+		assert.NotNil(t, response.ErrorBody())
+		assert.Error(t, errors.New("401 statusCode"), response.Error())
 	})
 
 	t.Run("Should return error 401 (Unauthorized) when not inform the tenantId in authenticated api", func(t *testing.T) {
-		r := restclient.Get[Resp](context.Background(), client, "/api/test-authenticated-endpoint/abc", map[string]string{userIDHeader: UserId})
-		assert.NotNil(t, r)
-		assert.Error(t, r.Error(), "401 statusCode")
-		assert.Nil(t, r.Body())
+		response := restclient.Request[Resp, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodGet,
+			Path:       "/api/test-authenticated-endpoint/abc",
+			Headers:    map[string]string{userIDHeader: UserId},
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusUnauthorized, response.StatusCode())
+		assert.Nil(t, response.SuccessBody())
+		assert.NotNil(t, response.ErrorBody())
+		assert.Error(t, errors.New("401 statusCode"), response.Error())
 	})
 
 	t.Run("Should return error 401 (Unauthorized) when not inform the credentials in authenticated api", func(t *testing.T) {
-		r := restclient.Get[Resp](context.Background(), client, "/api/test-authenticated-endpoint/abc", nil)
-		assert.NotNil(t, r)
-		assert.Error(t, r.Error(), "401 statusCode")
-		assert.Nil(t, r.Body())
+		response := restclient.Request[Resp, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodGet,
+			Path:       "/api/test-authenticated-endpoint/abc",
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusUnauthorized, response.StatusCode())
+		assert.Nil(t, response.SuccessBody())
+		assert.NotNil(t, response.ErrorBody())
+		assert.Error(t, errors.New("401 statusCode"), response.Error())
 	})
 
 	t.Run("Should return 200 (OK) in authenticated api", func(t *testing.T) {
-		r := restclient.Get[Resp](context.Background(), client, "/api/test-authenticated-endpoint/abc", map[string]string{tenantIDHeader: TenantId, userIDHeader: UserId})
-		assert.NotNil(t, r)
-		assert.NoError(t, r.Error())
-		assert.NotNil(t, r.Body())
-		assert.Equal(t, "abc", r.Body().Msg)
+		response := restclient.Request[Resp, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodGet,
+			Path:       "/api/test-authenticated-endpoint/abc",
+			Headers:    map[string]string{tenantIDHeader: TenantId, userIDHeader: UserId},
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusOK, response.StatusCode())
+		assert.NotNil(t, response.SuccessBody())
+		assert.Equal(t, "abc", response.SuccessBody().Msg)
+		assert.Nil(t, response.ErrorBody())
+		assert.NoError(t, response.Error())
 	})
 
 	t.Run("Should return 200 (OK) in no prefix api", func(t *testing.T) {
-		resp := restclient.Get[Resp](context.Background(), client, "/test-no-prefix-endpoint", nil)
-		assert.NotNil(t, resp)
-		assert.NoError(t, resp.Error())
-		assert.NotNil(t, resp.Body())
-		assert.Equal(t, "test-no-prefix-endpoint", resp.Body().Msg)
+		response := restclient.Request[Resp, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodGet,
+			Path:       "/test-no-prefix-endpoint",
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusOK, response.StatusCode())
+		assert.NotNil(t, response.SuccessBody())
+		assert.Equal(t, "test-no-prefix-endpoint", response.SuccessBody().Msg)
+		assert.Nil(t, response.ErrorBody())
+		assert.NoError(t, response.Error())
 	})
 
 	t.Run("Should return error response body", func(t *testing.T) {
-		resp := restclient.Get[Error](context.Background(), client, "/test-error-body", nil)
-		assert.NotNil(t, resp)
-		assert.Error(t, resp.Error(), "500 statusCode")
-		assert.Nil(t, resp.Body())
+		response := restclient.Request[Error, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodGet,
+			Path:       "/test-error-body",
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusInternalServerError, response.StatusCode())
+		assert.Nil(t, response.SuccessBody())
+		assert.Nil(t, response.ErrorBody())
+		assert.Error(t, errors.New("500 statusCode"), response.Error())
 	})
 
 	t.Run("Should return empty response body", func(t *testing.T) {
-		resp := restclient.Get[Resp](context.Background(), client, "/test-empty-body", nil)
-		assert.NotNil(t, resp)
-		assert.NoError(t, resp.Error())
-		assert.Nil(t, resp.Body())
+		response := restclient.Request[Resp, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodGet,
+			Path:       "/test-empty-body",
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusNoContent, response.StatusCode())
+		assert.Nil(t, response.SuccessBody())
+		assert.Nil(t, response.ErrorBody())
+		assert.NoError(t, response.Error())
 	})
 
 	t.Run("Should return request header", func(t *testing.T) {
-		expected := []string{"123"}
-		resp := restclient.Get[[]string](context.Background(), client, "/test-request-header", map[string]string{"X-Id": "123"})
-		assert.NotNil(t, resp)
-		assert.NoError(t, resp.Error())
-		assert.Equal(t, &expected, resp.Body())
+		expected := &[]string{"123"}
+
+		response := restclient.Request[[]string, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodGet,
+			Path:       "/test-request-header",
+			Headers:    map[string]string{"X-Id": "123"},
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusOK, response.StatusCode())
+		assert.NotNil(t, response.SuccessBody())
+		assert.EqualValues(t, expected, response.SuccessBody())
+		assert.Nil(t, response.ErrorBody())
+		assert.NoError(t, response.Error())
 	})
 
 	t.Run("Should return request headers", func(t *testing.T) {
 		expected := []string{"456"}
-		resp := restclient.Get[map[string][]string](context.Background(), client, "/test-request-headers", map[string]string{"X-Id": "456"})
-		assert.NotNil(t, resp)
-		assert.NoError(t, resp.Error())
-		assert.NotNil(t, resp.Body())
-		assert.Equal(t, expected, (*resp.Body())["X-Id"])
+
+		response := restclient.Request[map[string][]string, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodGet,
+			Path:       "/test-request-headers",
+			Headers:    map[string]string{"X-Id": "456"},
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusOK, response.StatusCode())
+		assert.NotNil(t, response.SuccessBody())
+		assert.EqualValues(t, expected, (*response.SuccessBody())["X-Id"])
+		assert.Nil(t, response.ErrorBody())
+		assert.NoError(t, response.Error())
 	})
 
 	t.Run("Should return query param", func(t *testing.T) {
 		expected := "10"
-		resp := restclient.Get[string](context.Background(), client, "/test-query-param?size=10", nil)
-		assert.NotNil(t, resp)
-		assert.NoError(t, resp.Error())
-		assert.NotNil(t, resp.Body())
-		assert.Equal(t, expected, *resp.Body())
+
+		response := restclient.Request[string, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodGet,
+			Path:       "/test-query-param?size=10",
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusOK, response.StatusCode())
+		assert.NotNil(t, response.SuccessBody())
+		assert.EqualValues(t, expected, *response.SuccessBody())
+		assert.Nil(t, response.ErrorBody())
+		assert.NoError(t, response.Error())
 	})
 
 	t.Run("Should return query array param", func(t *testing.T) {
 		expected := []string{"10", "20", "30"}
-		resp := restclient.Get[[]string](context.Background(), client, "/test-query-array-param?page=1&idList=10,20,30", nil)
-		assert.NotNil(t, resp)
-		assert.NoError(t, resp.Error())
-		assert.NotNil(t, resp.Body())
-		assert.Equal(t, expected, *resp.Body())
+
+		response := restclient.Request[[]string, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodGet,
+			Path:       "/test-query-array-param?page=1&idList=10,20,30",
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusOK, response.StatusCode())
+		assert.NotNil(t, response.SuccessBody())
+		assert.EqualValues(t, expected, *response.SuccessBody())
+		assert.Nil(t, response.ErrorBody())
+		assert.NoError(t, response.Error())
 	})
 
 	t.Run("Should return decoded query param", func(t *testing.T) {
 		expected := &Query{Msg: "decoded", Size: 10}
-		resp := restclient.Get[Query](context.Background(), client, "/test-decode-query-params?size=10&msg=decoded", nil)
-		assert.NotNil(t, resp)
-		assert.NoError(t, resp.Error())
-		assert.NotNil(t, resp.Body())
-		assert.Equal(t, expected, resp.Body())
+
+		response := restclient.Request[Query, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodGet,
+			Path:       "/test-decode-query-params?size=10&msg=decoded",
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusOK, response.StatusCode())
+		assert.NotNil(t, response.SuccessBody())
+		assert.EqualValues(t, expected, response.SuccessBody())
+		assert.Nil(t, response.ErrorBody())
+		assert.NoError(t, response.Error())
 	})
 
 	t.Run("Should return bad request when an error occurred in decoded body", func(t *testing.T) {
-		resp := restclient.Post[Resp](context.Background(), client, "/test-decode-body", &Resp{}, nil)
-		assert.NotNil(t, resp)
-		assert.Error(t, resp.Error())
-		assert.Nil(t, resp.Body())
+		response := restclient.Request[Resp, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodPost,
+			Path:       "/test-decode-body",
+			Body:       &Resp{},
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusInternalServerError, response.StatusCode())
+		assert.Nil(t, response.SuccessBody())
+		assert.Nil(t, response.ErrorBody())
+		assert.ErrorContains(t, response.Error(), "500 status code.")
 	})
 
 	t.Run("Should return decoded body", func(t *testing.T) {
 		expected := &Resp{Msg: "decoded"}
-		resp := restclient.Post[Resp](context.Background(), client, "/test-decode-body", expected, nil)
-		assert.NotNil(t, resp)
-		assert.NoError(t, resp.Error())
-		assert.NotNil(t, resp.Body())
-		assert.Equal(t, expected, resp.Body())
+
+		response := restclient.Request[Resp, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodPost,
+			Path:       "/test-decode-body",
+			Body:       expected,
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusOK, response.StatusCode())
+		assert.NotNil(t, response.SuccessBody())
+		assert.EqualValues(t, expected, response.SuccessBody())
+		assert.Nil(t, response.ErrorBody())
+		assert.NoError(t, response.Error())
 	})
 
 	t.Run("Should return context", func(t *testing.T) {
-		resp := restclient.Get[Resp](context.Background(), client, "/test-context", nil)
-		assert.NotNil(t, resp)
-		assert.NoError(t, resp.Error())
-		assert.NotNil(t, resp.Body())
-		assert.NotEmpty(t, resp.Body().Msg)
+		expected := &Resp{Msg: "context.Background"}
+
+		response := restclient.Request[Resp, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodGet,
+			Path:       "/test-context",
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusOK, response.StatusCode())
+		assert.NotNil(t, response.SuccessBody())
+		assert.EqualValues(t, expected, response.SuccessBody())
+		assert.Nil(t, response.ErrorBody())
+		assert.NoError(t, response.Error())
 	})
 
 	t.Run("Should return server file", func(t *testing.T) {
-		resp := restclient.Get[Resp](context.Background(), client, "/test-serve-file", nil)
-		assert.NotNil(t, resp)
-		assert.NoError(t, resp.Error())
-		assert.NotNil(t, resp.Body())
-		assert.Equal(t, "test file", resp.Body().Msg)
-	})
+		expected := &Resp{Msg: "test file"}
 
-	t.Run("Should return error 200 using raw body", func(t *testing.T) {
-		body := "text message"
-		resp := restclient.Post[Resp](context.Background(), client, "/public/test-public-endpoint", &body, nil)
-		assert.NotNil(t, resp)
-		assert.NoError(t, resp.Error())
-		assert.NotNil(t, resp.Body())
-		assert.Equal(t, "\"text message\"", resp.Body().Msg)
+		response := restclient.Request[Resp, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodGet,
+			Path:       "/test-serve-file",
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusOK, response.StatusCode())
+		assert.NotNil(t, response.SuccessBody())
+		assert.EqualValues(t, expected, response.SuccessBody())
+		assert.Nil(t, response.ErrorBody())
+		assert.NoError(t, response.Error())
 	})
 
 	t.Run("should validate custom middleware with error", func(t *testing.T) {
-		resp := restclient.Get[Resp](context.Background(), client, "/public/middleware/conflict", nil)
-		assert.NotNil(t, resp)
-		assert.Equal(t, "409 statusCode", resp.Error().Error())
-		assert.Equal(t, http.StatusConflict, resp.Status())
+		response := restclient.Request[Resp, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodGet,
+			Path:       "/public/middleware/conflict",
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusConflict, response.StatusCode())
+		assert.Nil(t, response.SuccessBody())
+		assert.NotNil(t, response.ErrorBody())
+		assert.ErrorContains(t, response.Error(), "409 status code")
 	})
 
 	t.Run("should validate custom middleware with success", func(t *testing.T) {
-		resp := restclient.Get[Resp](context.Background(), client, "/public/middleware/success", nil)
-		assert.NotNil(t, resp)
-		assert.Equal(t, http.StatusOK, resp.Status())
-		assert.Equal(t, "success", resp.Body().Msg)
+		expected := &Resp{Msg: "success"}
+
+		response := restclient.Request[Resp, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodGet,
+			Path:       "/public/middleware/success",
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusOK, response.StatusCode())
+		assert.NotNil(t, response.SuccessBody())
+		assert.EqualValues(t, expected, response.SuccessBody())
+		assert.Nil(t, response.ErrorBody())
+		assert.NoError(t, response.Error())
 	})
 
 	t.Run("should validate hook before enter route with error", func(t *testing.T) {
-		resp := restclient.Get[Resp](context.Background(), client, "/public/hook/conflict", nil)
-		assert.NotNil(t, resp)
-		assert.Equal(t, "409 statusCode", resp.Error().Error())
-		assert.Equal(t, http.StatusConflict, resp.Status())
+		response := restclient.Request[Resp, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodGet,
+			Path:       "/public/hook/conflict",
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusConflict, response.StatusCode())
+		assert.Nil(t, response.SuccessBody())
+		assert.NotNil(t, response.ErrorBody())
+		assert.ErrorContains(t, response.Error(), "409 status code")
 	})
 
 	t.Run("should validate hook before enter route with success", func(t *testing.T) {
-		resp := restclient.Get[Resp](context.Background(), client, "/public/hook/success", nil)
-		assert.NotNil(t, resp)
-		assert.Equal(t, http.StatusOK, resp.Status())
-		assert.Equal(t, "success", resp.Body().Msg)
+		expected := &Resp{Msg: "success"}
+
+		response := restclient.Request[Resp, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodGet,
+			Path:       "/public/hook/success",
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusOK, response.StatusCode())
+		assert.NotNil(t, response.SuccessBody())
+		assert.EqualValues(t, expected, response.SuccessBody())
+		assert.Nil(t, response.ErrorBody())
+		assert.NoError(t, response.Error())
 	})
 }
 
 func TestStartRestServerCustomAuthMiddleware(t *testing.T) {
+	ctx := context.Background()
 	test.InitializeBaseTest()
 
 	type Resp struct {
@@ -499,19 +714,39 @@ func TestStartRestServerCustomAuthMiddleware(t *testing.T) {
 	CustomAuthMiddleware(&customAuthenticationContextMiddleware{})
 	go ListenAndServe()
 	time.Sleep(1 * time.Second)
-	client := restclient.NewRestClient("test-server", fmt.Sprintf("http://localhost:%d", config.PORT), 1)
+	client := restclient.NewRestClient(&restclient.RestClientConfig{
+		Name:    "test-server",
+		BaseURL: fmt.Sprintf("http://localhost:%d", config.PORT),
+		Timeout: 1,
+	})
 
 	t.Run("Should return status 200", func(t *testing.T) {
-		resp := restclient.Get[Resp](context.Background(), client, "/api/users", map[string]string{"Authorization": "abcd1234"})
-		assert.NoError(t, resp.Error())
-		assert.NotNil(t, resp.Body())
-		assert.Equal(t, "test-custom-authentication-middleware", resp.Body().Msg)
+		response := restclient.Request[Resp, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodGet,
+			Path:       "/api/users",
+			Headers:    map[string]string{"Authorization": "abcd1234"},
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.EqualValues(t, http.StatusOK, response.StatusCode())
+		assert.NotNil(t, response.SuccessBody())
+		assert.Equal(t, "test-custom-authentication-middleware", response.SuccessBody().Msg)
+		assert.Nil(t, response.ErrorBody())
+		assert.NoError(t, response.Error())
 	})
 
 	t.Run("Should return error 401", func(t *testing.T) {
-		resp := restclient.Get[Resp](context.Background(), client, "/api/users", nil)
-		assert.NotNil(t, resp)
-		assert.Error(t, resp.Error(), "401 statusCode")
-		assert.Nil(t, resp.Body())
+		response := restclient.Request[Resp, any]{
+			Ctx:        ctx,
+			Client:     client,
+			HttpMethod: http.MethodGet,
+			Path:       "/api/users",
+		}.Call()
+
+		assert.NotNil(t, response)
+		assert.Error(t, response.Error(), "401 statusCode")
+		assert.Nil(t, response.SuccessBody())
 	})
 }

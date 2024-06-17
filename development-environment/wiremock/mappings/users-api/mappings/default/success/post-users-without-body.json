@@ -1,0 +1,21 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "POST",
+    "urlPattern": "/users-api/v1/users",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "name": "User 100",
+          "email": "user_100@email.com"
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 201,
+    "headers": {
+      "Content-Length": "0"
+    }
+  }
+}

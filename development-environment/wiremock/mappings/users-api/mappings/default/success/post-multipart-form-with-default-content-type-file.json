@@ -1,0 +1,23 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "POST",
+    "urlPattern": "/users-api/v1/upload",
+    "headers": {
+      "Content-Type": {
+        "matches": "multipart/form-data;\\s*boundary=[^\\s]+"
+      }
+    },
+    "bodyPatterns": [
+      {
+        "matches": ".+Content-Disposition: form-data; name=\"file\"; filename=\"test.txt\".*Content-Type: application/octet-stream.+"
+      }
+    ]
+  },
+  "response": {
+    "status": 201,
+    "headers": {
+      "Content-Type": "application/json; charset=utf-8"
+    }
+  }
+}
