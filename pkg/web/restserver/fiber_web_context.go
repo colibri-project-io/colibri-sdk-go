@@ -3,18 +3,18 @@ package restserver
 import (
 	"context"
 	"encoding/json"
+	"mime/multipart"
+	"net/http"
+	"strings"
+
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/security"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/validator"
 	"github.com/gofiber/fiber/v2"
-	"mime/multipart"
-	"net/http"
-	"strings"
 )
 
 type fiberWebContext struct {
 	ctx *fiber.Ctx
-	err error
 }
 
 func newFiberWebContext(ctx *fiber.Ctx) *fiberWebContext {
@@ -94,16 +94,14 @@ func (f *fiberWebContext) ServeFile(path string) {
 }
 
 func (f *fiberWebContext) JsonResponse(statusCode int, body any) {
-	f.ctx.Response().SetStatusCode(statusCode)
+	f.ctx.Status(statusCode)
 	if err := f.ctx.JSON(body); err != nil {
 		f.ErrorResponse(http.StatusInternalServerError, err)
 	}
 }
 
 func (f *fiberWebContext) ErrorResponse(statusCode int, err error) {
-	f.ctx.Response().SetStatusCode(statusCode)
-	_ = f.ctx.JSON(Error{err.Error()})
-	f.err = err
+	f.JsonResponse(statusCode, Error{err.Error()})
 }
 
 func (f *fiberWebContext) EmptyResponse(statusCode int) {

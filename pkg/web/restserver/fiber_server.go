@@ -2,14 +2,15 @@ package restserver
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/swagger"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
-	"strings"
-	"time"
 )
 
 type fiberWebServer struct {
@@ -88,11 +89,6 @@ func (f *fiberWebServer) injectRoutes() {
 			}
 
 			fn(webContext)
-
-			if webContext.err != nil {
-				return webContext.err
-			}
-
 			return nil
 		})
 
