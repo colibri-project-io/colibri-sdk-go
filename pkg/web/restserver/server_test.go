@@ -421,7 +421,9 @@ func TestStartRestServer(t *testing.T) {
 	})
 
 	t.Run("Should return error response body", func(t *testing.T) {
-		response := restclient.Request[Error, any]{
+		expected := &Error{"test-error-body"}
+
+		response := restclient.Request[any, Error]{
 			Ctx:        ctx,
 			Client:     client,
 			HttpMethod: http.MethodGet,
@@ -431,7 +433,8 @@ func TestStartRestServer(t *testing.T) {
 		assert.NotNil(t, response)
 		assert.EqualValues(t, http.StatusInternalServerError, response.StatusCode())
 		assert.Nil(t, response.SuccessBody())
-		assert.Nil(t, response.ErrorBody())
+		assert.NotNil(t, response.ErrorBody())
+		assert.EqualValues(t, expected, response.ErrorBody())
 		assert.Error(t, errors.New("500 statusCode"), response.Error())
 	})
 
@@ -543,7 +546,7 @@ func TestStartRestServer(t *testing.T) {
 	})
 
 	t.Run("Should return bad request when an error occurred in decoded body", func(t *testing.T) {
-		response := restclient.Request[Resp, any]{
+		response := restclient.Request[Resp, Error]{
 			Ctx:        ctx,
 			Client:     client,
 			HttpMethod: http.MethodPost,
@@ -552,10 +555,10 @@ func TestStartRestServer(t *testing.T) {
 		}.Call()
 
 		assert.NotNil(t, response)
-		assert.EqualValues(t, http.StatusInternalServerError, response.StatusCode())
+		assert.EqualValues(t, http.StatusBadRequest, response.StatusCode())
 		assert.Nil(t, response.SuccessBody())
-		assert.Nil(t, response.ErrorBody())
-		assert.ErrorContains(t, response.Error(), "500 status code.")
+		assert.NotNil(t, response.ErrorBody())
+		assert.ErrorContains(t, response.Error(), "400 status code")
 	})
 
 	t.Run("Should return decoded body", func(t *testing.T) {
