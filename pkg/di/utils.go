@@ -13,7 +13,7 @@ func isInterface(r reflect.Type) bool {
 
 func searchDisambiguation(returnType reflect.Type, dependenciesFound []DependencyBean) DependencyBean {
 	// Iterar sobre os campos da struct e ler os metadados
-	tags := getTagsInType(returnType)
+	tags := getTagsInType(returnType, "di")
 	for fieldName, tagValue := range tags {
 		for _, dependency := range dependenciesFound {
 			nameParts := strings.Split(dependency.Name, ".")
@@ -78,7 +78,7 @@ func generateDependencyBean(fn interface{}, isGlobal bool) DependencyBean {
 		ParamTypes:        paramTypes}
 }
 
-func getTagsInType(objectType reflect.Type) map[string]string {
+func getTagsInType(objectType reflect.Type, tagName string) map[string]string {
 	tags := make(map[string]string)
 	numField := objectType.NumField()
 	if numField == 0 {
@@ -88,7 +88,7 @@ func getTagsInType(objectType reflect.Type) map[string]string {
 	for i := 0; i < numField; i++ {
 		field := objectType.Field(i)
 		// obtem o metadado da tag
-		tagValue := field.Tag.Get("sebas")
+		tagValue := field.Tag.Get(tagName)
 		fmt.Println("tagValue: ", tagValue)
 		tags[field.Name] = tagValue
 	}

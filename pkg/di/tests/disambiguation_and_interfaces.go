@@ -13,7 +13,7 @@ type barObjectWithoutTag struct {
 }
 
 type barObjectWithTag struct {
-	G fooInterface `sebas:"newFooImplementation2"`
+	G fooInterface `di:"newFooImplementation2"`
 }
 
 // Criando o construtor dessa streuct dependente

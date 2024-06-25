@@ -1,7 +1,7 @@
 package main
 
 type BeanWithMetadata struct {
-	f BeanDependency `sebas:"NewBeanDependency2"`
+	f BeanDependency `di:"NewBeanDependency2"`
 }
 
 type BeanWithoutMetadata struct {
