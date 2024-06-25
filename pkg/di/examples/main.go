@@ -10,11 +10,11 @@ import (
 type Repository struct {
 }
 
-func (r Repository) GetData(){
+func (r Repository) GetData() {
 	fmt.Println("Chamando GetData")
 }
 
-type RepositoryInterface interface{
+type RepositoryInterface interface {
 	GetData()
 }
 
@@ -22,12 +22,12 @@ type Service struct {
 	R RepositoryInterface
 }
 
-func (s Service) Apply(){
+func (s Service) Apply() {
 	s.R.GetData()
 	fmt.Println("Chamando Apply")
 }
 
-type ServiceInterface interface{
+type ServiceInterface interface {
 	Apply()
 }
 

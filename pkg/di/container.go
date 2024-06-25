@@ -50,7 +50,7 @@ func (c *Container) getDependencyConstructorArgs(dependency DependencyBean) []re
 	args := []reflect.Value{}
 	fmt.Printf("constructor: %s, number of parameters: %d\n", dependency.Name, len(dependency.ParamTypes))
 	for _, paramType := range dependency.ParamTypes {
-		
+
 		// Procura na lista de um contrutuores um tipo igual ao do parametro
 
 		injectableDependency := c.searchInjectableDependencies(paramType, dependency.constructorReturn)
