@@ -3,7 +3,7 @@
 Funcionalidades dessa versão:
 
  - Injeção automática de dependências 	
- - Identificação de implementação automática de interfaces 	
+ - Identificação automática de implementação de interfaces 	
  - **Desambiguação** por meio de **metadados**
 
 		
