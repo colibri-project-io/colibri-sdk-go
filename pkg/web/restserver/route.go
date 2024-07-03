@@ -33,7 +33,7 @@ type healtCheck struct {
 }
 
 func addHealthCheckRoute() {
-	const route = "/management/health"
+	const route = "/health"
 	srvRoutes = append(srvRoutes, Route{
 		URI:    route,
 		Method: http.MethodGet,
@@ -47,7 +47,7 @@ func addHealthCheckRoute() {
 
 func addDocumentationRoute() {
 	if slices.Contains([]string{config.ENVIRONMENT_SANDBOX, config.ENVIRONMENT_DEVELOPMENT}, config.ENVIRONMENT) {
-		const route = "/v2/api-docs"
+		const route = "/api-docs"
 		srvRoutes = append(srvRoutes, Route{
 			URI:    route,
 			Method: http.MethodGet,

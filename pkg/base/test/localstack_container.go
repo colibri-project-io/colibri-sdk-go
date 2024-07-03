@@ -8,6 +8,8 @@ import (
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/go-connections/nat"
 	"github.com/google/uuid"
 	"github.com/testcontainers/testcontainers-go"
@@ -15,7 +17,7 @@ import (
 )
 
 const (
-	localstackDockerImage = "localstack/localstack:1.4"
+	localstackDockerImage = "localstack/localstack:3.1"
 	localstackSvcPort     = "4566"
 )
 
@@ -43,17 +45,21 @@ func newLocalstackContainer(ctx context.Context, configPath string) *LocalstackC
 		ExposedPorts: []string{localstackSvcPort},
 		Name:         fmt.Sprintf("colibri-project-test-localstack-%s", uuid.New().String()),
 		Env: map[string]string{
-			"DEBUG":           "${DEBUG-}",
-			"SERVICES":        "sns,sqs,s3,dynamodb",
-			"DATA_DIR":        "${DATA_DIR-}",
-			"LAMBDA_EXECUTOR": "${LAMBDA_EXECUTOR-}",
-			"HOST_TMP_FOLDER": "${TMPDIR:-/tmp/}localstack",
-			"DOCKER_HOST":     "unix:///var/run/docker.sock",
+			"DEBUG":    "1",
+			"SERVICES": "sns,sqs,s3,dynamodb",
 		},
-		Mounts: testcontainers.Mounts(
-			testcontainers.BindMount(configPath, "/docker-entrypoint-initaws.d/"),
-			testcontainers.BindMount("/var/run/docker.sock", "/var/run/docker.sock"),
-		),
+		HostConfigModifier: func(hostConfig *container.HostConfig) {
+			hostConfig.Mounts = append(hostConfig.Mounts, mount.Mount{
+				Type:   mount.TypeBind,
+				Source: configPath,
+				Target: "/etc/localstack/init/ready.d/",
+			})
+			hostConfig.Mounts = append(hostConfig.Mounts, mount.Mount{
+				Type:   mount.TypeBind,
+				Source: "/var/run/docker.sock",
+				Target: "/var/run/docker.sock",
+			})
+		},
 		WaitingFor: wait.ForAll(
 			wait.ForListeningPort(localstackSvcPort),
 			wait.ForLog("localstack emulator started"),
@@ -72,10 +78,12 @@ func (c *LocalstackContainer) start() {
 	if err != nil {
 		logging.Fatal(err.Error())
 	}
+
 	localstackPort, err := c.lsContainer.MappedPort(c.ctx, localstackSvcPort)
 	if err != nil {
 		logging.Fatal(err.Error())
 	}
+
 	log.Printf("Test localstack started at port: %s", localstackPort)
 	c.setEnv(localstackPort)
 }

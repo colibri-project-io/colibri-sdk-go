@@ -1,12 +1,12 @@
 package types
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestJsonB(t *testing.T) {
-
 	t.Run("should error with nil value", func(t *testing.T) {
 		var result JsonB
 		err := result.Scan(nil)

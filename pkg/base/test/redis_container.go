@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	redisDockerImage = "redis:7.0-alpine"
+	redisDockerImage = "redis:alpine"
 	testRedisSvcPort = "6379"
 )
 
@@ -52,6 +52,7 @@ func newRedisContainer() *RedisContainer {
 func (c *RedisContainer) start() {
 	var err error
 	ctx := context.Background()
+
 	c.redisContainer, err = testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: *c.redisContainerRequest,
 		Started:          true,
