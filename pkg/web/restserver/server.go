@@ -15,7 +15,7 @@ var (
 	srv               Server
 	customAuth        CustomAuthenticationMiddleware
 
-	errUserUnauthenticated = errors.New("user not authenticated")
+	UserUnauthenticatedError = errors.New("user not authenticated")
 )
 
 // Server is the contract to http server implementation
@@ -46,7 +46,8 @@ func ListenAndServe() {
 	addHealthCheckRoute()
 	addDocumentationRoute()
 
-	srv = createFiberServer()
+	//srv = createFiberServer()
+	srv = newHttpWebServer()
 	srv.initialize()
 	srv.injectMiddlewares()
 	srv.injectCustomMiddlewares()

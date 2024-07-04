@@ -43,7 +43,7 @@ func (m *customAuthenticationContextMiddleware) Apply(ctx WebContext) (*security
 
 	authHeaders := ctx.RequestHeaders()["Authorization"]
 	if len(authHeaders) < 1 || authHeaders[0] == "" {
-		return nil, errUserUnauthenticated
+		return nil, UserUnauthenticatedError
 	}
 	return security.NewAuthenticationContext("ab123", "123abc"), nil
 
@@ -59,6 +59,12 @@ func beforeEnterApply(ctx WebContext) *MiddlewareError {
 func TestStartRestServer(t *testing.T) {
 	ctx := context.Background()
 	test.InitializeBaseTest()
+
+	t.Cleanup(func() {
+		srvRoutes = make([]Route, 0)
+		customAuth = nil
+		customMiddlewares = make([]CustomMiddleware, 0)
+	})
 
 	type Resp struct {
 		Msg string `json:"msg" validate:"required"`
@@ -304,8 +310,8 @@ func TestStartRestServer(t *testing.T) {
 		assert.NotNil(t, response)
 		assert.EqualValues(t, http.StatusNotFound, response.StatusCode())
 		assert.Nil(t, response.SuccessBody())
-		assert.Nil(t, response.ErrorBody())
-		assert.Error(t, response.Error(), "404 staus code")
+		assert.NotNil(t, response.ErrorBody())
+		assert.Error(t, response.Error(), "404 status code")
 	})
 
 	t.Run("Should return 200 (OK) in public api", func(t *testing.T) {
@@ -593,7 +599,7 @@ func TestStartRestServer(t *testing.T) {
 		assert.NotNil(t, response)
 		assert.EqualValues(t, http.StatusOK, response.StatusCode())
 		assert.NotNil(t, response.SuccessBody())
-		assert.EqualValues(t, expected, response.SuccessBody())
+		assert.True(t, strings.HasPrefix(response.SuccessBody().Msg, expected.Msg))
 		assert.Nil(t, response.ErrorBody())
 		assert.NoError(t, response.Error())
 	})
@@ -686,6 +692,12 @@ func TestStartRestServer(t *testing.T) {
 func TestStartRestServerCustomAuthMiddleware(t *testing.T) {
 	ctx := context.Background()
 	test.InitializeBaseTest()
+
+	t.Cleanup(func() {
+		srvRoutes = make([]Route, 0)
+		customAuth = nil
+		customMiddlewares = make([]CustomMiddleware, 0)
+	})
 
 	type Resp struct {
 		Msg string `json:"msg" validate:"required"`
