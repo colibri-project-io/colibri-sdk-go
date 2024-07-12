@@ -49,50 +49,63 @@ func (f *Container) StartApp(startFunc interface{}) {
 func (c *Container) getDependencyConstructorArgs(dependency DependencyBean) []reflect.Value {
 	args := []reflect.Value{}
 	fmt.Printf("constructor: %s, number of parameters: %d\n", dependency.Name, len(dependency.ParamTypes))
-	for _, paramType := range dependency.ParamTypes {
+	for position, paramType := range dependency.ParamTypes {
+		
+		// Check if trhe variadic param
+		if dependency.IsVariadic {
+			if position == (len(dependency.ParamTypes) - 1) {
+				// Redice slice elements to single element
+				paramType = ReduceSliceToSingleElement(paramType)
+			}
+		}
 
 		// Procura na lista de um contrutuores um tipo igual ao do parametro
+		injectableDependencies := c.searchInjectableDependencies(paramType, dependency.constructorReturn, dependency.IsVariadic)
 
-		injectableDependency := c.searchInjectableDependencies(paramType, dependency.constructorReturn)
-
-		if injectableDependency.IsFunction {
-			argumants := c.getDependencyConstructorArgs(injectableDependency)
-			resp := injectableDependency.fnValue.Call(argumants)
-			args = append(args, resp...)
-			log.Println("Injecting: ", injectableDependency.Name, " in ", dependency.Name)
-			if injectableDependency.IsGlobal {
-				// Change function dependency to object dependency
-				injectableDependency.fnValue = resp[0]
-				injectableDependency.IsFunction = false
-				// Update the object in the dependencies list
-
-				c.dependencies[injectableDependency.Name] = injectableDependency
+		for _, injectableDependency := range injectableDependencies {
+			if injectableDependency.IsFunction {
+				argumants := c.getDependencyConstructorArgs(injectableDependency)
+				resp := injectableDependency.fnValue.Call(argumants)
+				args = append(args, resp...)
+				log.Println("Injecting: ", injectableDependency.Name, " in ", dependency.Name)
+				if injectableDependency.IsGlobal {
+					// Change function dependency to object dependency
+					injectableDependency.fnValue = resp[0]
+					injectableDependency.IsFunction = false
+					// Update the object in the dependencies list
+					c.dependencies[injectableDependency.Name] = injectableDependency
+				}
+			} else {
+				args = append(args, injectableDependency.fnValue)
 			}
-		} else {
-			args = append(args, injectableDependency.fnValue)
 		}
 	}
 	return args
 }
 
-func (c *Container) searchInjectableDependencies(paramType reflect.Type, returnType reflect.Type) DependencyBean {
+func (c *Container) searchInjectableDependencies(paramType reflect.Type, returnType reflect.Type, isVariadic bool) []DependencyBean {
 	var dependenciesFound []DependencyBean
-	var depFound DependencyBean
+	var depsFound []DependencyBean
 	if isInterface(paramType) {
 		dependenciesFound = c.searchImplementations(paramType)
 	} else {
 		dependenciesFound = c.searchTypes(paramType)
 	}
 	if len(dependenciesFound) > 1 {
-		// O elemento 0 é o único já que os contrutores só tem um retorno
-		disambiguation := searchDisambiguation(returnType, dependenciesFound)
-		return disambiguation
+		if isVariadic {
+			depsFound = dependenciesFound
+		} else {
+			// O elemento 0 é o único já que os contrutores só tem um retorno
+			disambiguation := searchDisambiguation(returnType, dependenciesFound)
+			depsFound = append(depsFound, disambiguation)
+			return depsFound
+		}
 	} else if len(dependenciesFound) == 0 {
 		panic("nemhum construtor para o parametro foi encontrado")
 	} else {
-		depFound = dependenciesFound[0]
+		depsFound = append(depsFound, dependenciesFound[0])
 	}
-	return depFound
+	return depsFound
 }
 
 func (f *Container) searchTypes(paramType reflect.Type) []DependencyBean {

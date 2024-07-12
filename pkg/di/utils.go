@@ -68,12 +68,14 @@ func generateDependencyBean(fn interface{}, isGlobal bool) DependencyBean {
 	nameFunction := getFunctionName(fnValue)
 	paramTypes := getParamTypes(fnType)
 	returnType := getReturnType(fnType)
+	isVariadic := fnType.IsVariadic()
 	return DependencyBean{
 		constructorType:   fnType,
 		fnValue:           fnValue,
 		Name:              nameFunction,
 		IsGlobal:          isGlobal,
 		IsFunction:        true,
+		IsVariadic:        isVariadic,
 		constructorReturn: returnType,
 		ParamTypes:        paramTypes}
 }
@@ -93,4 +95,12 @@ func getTagsInType(objectType reflect.Type, tagName string) map[string]string {
 		tags[field.Name] = tagValue
 	}
 	return tags
+}
+
+func ReduceSliceToSingleElement(sliceElem reflect.Type) reflect.Type {
+	if sliceElem.Kind() == reflect.Slice {
+		elementType := sliceElem.Elem()
+		return elementType
+	}
+	return sliceElem
 }

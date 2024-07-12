@@ -90,6 +90,7 @@ Durante o processo de mapeamento e injeção, caso seja encontrado mais de um co
     	return  BeanDependency{}
     }  
 
+> **Observação:** a desambiguação não funciona em parâmetros variádicos
   
 # Fluxo de funcionamento do contêiner
 

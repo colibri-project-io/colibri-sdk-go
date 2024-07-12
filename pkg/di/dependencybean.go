@@ -5,6 +5,7 @@ import (
 )
 
 type DependencyBean struct {
+	IsVariadic        bool
 	IsFunction        bool
 	IsGlobal          bool
 	Name              string
