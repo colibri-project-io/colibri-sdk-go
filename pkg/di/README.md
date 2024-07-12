@@ -6,9 +6,8 @@ Funcionalidades dessa versão:
  - Identificação automática de implementação de interfaces 	
  - **Desambiguação** por meio de **metadados**
 
-		
-	
-A struct `di.Container` representa o contêiner de injeção de dependências e é responsável por instanciar, configurar e montar os componentes mapeados na aplicação (beans). O contêiner recebe instruções sobre os componentes para instanciar, configurar e montar através de funções contrutoras e tags com metadados nas structs.
+## Sobre o contêiner de injeção de dependência (DI)	
+A struct `di.Container` representa um contêiner de injeção de dependências e é responsável por instanciar, configurar e montar os componentes mapeados na aplicação (beans). O contêiner recebe instruções sobre os componentes para instanciar, configurar e montar através de funções contrutoras e tags com metadados nas structs.
 
 Exemplo básico:
 
@@ -36,6 +35,8 @@ Exemplo básico:
 	func NewFoo() Foo {
 		return  Foo{}
     }
+
+No exemplo acima, os construtores foram registrados no container por meio do método `AddDependencies`. Após o registro das dependências, inicia-se a aplicação por meio do método `StartApp`, que recebe como parâmetro uma função responsável por iniciar todo o fluxo da aplicação. Após o recebimento da função de inicialização do sistema, o container identifica e instancia, por meio dos parâmetros dos construtores, as dependências de cada objeto do sistema.
 
 ## Beans
 
@@ -92,11 +93,17 @@ Durante o processo de mapeamento e injeção, caso seja encontrado mais de um co
   
 # Fluxo de funcionamento do contêiner
 
-1. Registra-se a função responsável por iniciar a aplicação.
+O container de injeção de dependência funciona por meio de um processo de empilhamento e injeção. Na fase de empilhamento, são identificadas as dependências de um objeto e as dependências dessas dependências, em um ciclo recursivo que termina ao encontrar objetos que não necessitam de injeção de dependência. Na fase de injeção, os objetos mapeados na pilha são criados de forma que os objetos no topo da pilha são utilizados como parâmetros para a criação dos objetos nas camadas inferiores.
 
-2. Identifica-se os beans que essa função recebe como parametro.
+![flow](flow.png)
 
-3. Procura os contrutores desse beans.
+1. Registram-se os construtores responsáveis por criar todas as dependências da aplicação. As dependências criadas pelos construtores e injetadas nos parâmetros de outros construtores são chamadas de beans.
+
+2. Registra-se a função responsável por iniciar todo o fluxo aplicação.
+
+3. Identifica-se os beans que essa função recebe como parametro.
+
+4. Procura-se no registro de contrutuores os contrutores desse beans.
 
 	1. Caso esses contrutores também recebam outros benas como párametros vai se iniciar um ciclo recursivo de procura de bens e identificação de construtores.
 
@@ -104,4 +111,4 @@ Durante o processo de mapeamento e injeção, caso seja encontrado mais de um co
 
 	3. Caso seja encontrado mais de um construtor para um bean, usa-se os metadados das tags para descobrir qual deve ser injetado.
 
-4. Quando se encontram os beans raiz (aqueles que não posuuem parametro), a recursividade da função termina ese inicia o processo de contrução de objetos.
+5. Quando se encontram os beans raiz (aqueles que não posuuem parametro), a recursividade da função termina ese inicia o processo de contrução de objetos.
