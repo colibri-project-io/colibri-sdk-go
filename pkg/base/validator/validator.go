@@ -27,6 +27,18 @@ func Initialize() {
 	registerUUIDCustomType()
 	registerIsoDateCustomType()
 	registerIsoTimeCustomType()
+
+	registerCustomValidations()
+}
+
+// RegisterCustomValidation registers a custom validation function with the provided tag.
+//
+// Parameters:
+// - tag: the tag to be registered
+// - fn: the function to be registered
+// No return values.
+func RegisterCustomValidation(tag string, fn playValidator.Func) {
+	instance.validator.RegisterValidation(tag, fn)
 }
 
 // registerUUIDCustomType registers a custom type function for UUID parsing.
@@ -73,4 +85,12 @@ func Struct(object any) error {
 // Return type: error
 func FormDecode(object any, values map[string][]string) error {
 	return instance.formDecoder.Decode(object, values)
+}
+
+// registerCustomValidations registers all custom validations
+func registerCustomValidations() {
+	RegisterCustomValidation("br-states", brStatesValidation)
+	RegisterCustomValidation("cnpj", brCNPJValidation)
+	RegisterCustomValidation("cpf", brCPFValidation)
+	RegisterCustomValidation("br-postal-code", brPostalCodeValidation)
 }

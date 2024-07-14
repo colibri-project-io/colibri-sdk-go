@@ -92,7 +92,7 @@ func (f *fiberWebServer) injectRoutes() {
 			return nil
 		})
 
-		logging.Debug("Registered route %s %s", route.Method, routeUri)
+		logging.Info("Registered route [%7s] %s", route.Method, string(route.Prefix)+route.URI)
 	}
 }
 
@@ -115,13 +115,11 @@ func (f *fiberWebServer) addMetricsRoute() {
 		p(c.Context())
 		return nil
 	})
-
-	logging.Debug(fmt.Sprintf("Starting metrics on route: %s", route))
 }
 
 func (f *fiberWebServer) addSwaggerUI() {
 	if config.IsDevelopmentEnvironment() {
-		f.srv.Get("/swagger/*", swagger.New(swagger.Config{URL: "/v2/api-docs"}))
+		f.srv.Get("/swagger/*", swagger.New(swagger.Config{URL: "/api-docs"}))
 	}
 }
 

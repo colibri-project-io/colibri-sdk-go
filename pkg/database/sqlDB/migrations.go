@@ -39,7 +39,6 @@ func executeDatabaseMigration(instance *sql.DB) error {
 
 	sourceUrl := os.Getenv(migrationSourceURLEnv)
 	if sourceUrl == "" {
-		logging.Warn(migrationEnvNotSetUsingDefaultMsg, migrationSourceURLEnv, migrationWithPwdDefaultPath)
 		sourceUrl = migrationDefaultPath
 	}
 
