@@ -2,9 +2,10 @@ package logging
 
 import (
 	"fmt"
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
 	"log/slog"
 	"strings"
+
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
 )
 
 var logger *slog.Logger
@@ -14,8 +15,7 @@ func init() {
 }
 
 func InitializeLogger() {
-	logger = slog.New(createLogHandler()).
-		With("colibri-sdk-go", map[string]string{"application": config.APP_NAME, "application_type": config.APP_TYPE, "version": config.VERSION})
+	logger = slog.New(createLogHandler())
 }
 
 func createLogHandler() slog.Handler {

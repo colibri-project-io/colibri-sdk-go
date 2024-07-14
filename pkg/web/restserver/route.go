@@ -1,11 +1,9 @@
 package restserver
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/logging"
 	"golang.org/x/exp/slices"
 )
 
@@ -41,8 +39,6 @@ func addHealthCheckRoute() {
 			ctx.JsonResponse(http.StatusOK, &healtCheck{"OK"})
 		},
 	})
-
-	logging.Info(fmt.Sprintf("Starting health-check on route: %s", route))
 }
 
 func addDocumentationRoute() {
@@ -55,7 +51,5 @@ func addDocumentationRoute() {
 				ctx.ServeFile("./docs/swagger.json")
 			},
 		})
-
-		logging.Info(fmt.Sprintf("Starting documentation on route: %s", route))
 	}
 }
