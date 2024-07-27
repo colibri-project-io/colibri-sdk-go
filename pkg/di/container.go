@@ -1,4 +1,4 @@
-package gonnect
+package di
 
 import (
 	"fmt"
