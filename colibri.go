@@ -36,7 +36,7 @@ func InitializeApp() {
 
 func printBanner() {
 	if config.IsDevelopmentEnvironment() {
-		fmt.Printf(banner)
+		fmt.Print(banner)
 	}
 }
 

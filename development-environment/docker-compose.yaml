@@ -27,5 +27,17 @@ services:
     networks:
       - dev
 
+  gcp-emulator:
+    image: google/cloud-sdk:latest
+    volumes:
+      - ./gcp-emulator:/scripts
+    ports:
+      - "8686:8686"  # Porta para o Pub/Sub
+      - "8080:8080"  # Porta para o Storage
+    entrypoint: ["/bin/bash", "-c"]
+    command: ["/scripts/start.sh"]
+    networks:
+      - dev
+
 networks:
   dev:

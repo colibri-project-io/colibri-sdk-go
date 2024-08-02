@@ -2,10 +2,11 @@ package test
 
 import (
 	"context"
-	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/cloud"
 	"log"
 	"os"
 	"sync"
+
+	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/cloud"
 
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/config"
 	"github.com/colibri-project-io/colibri-sdk-go/pkg/base/monitoring"
@@ -17,13 +18,15 @@ import (
 type key string
 
 const (
-	localstackID key = "localstack-id"
+	localstackID  key = "localstack-id"
+	gcpEmulatorID key = "gcpEmulator-id"
 
-	DEVELOPMENT_ENVIRONMENT_PATH string = "../../../development-environment"
-	DATABASE_ENVIRONMENT_PATH    string = DEVELOPMENT_ENVIRONMENT_PATH + "/database/"
-	REST_ENVIRONMENT_PATH        string = DEVELOPMENT_ENVIRONMENT_PATH + "/rest/"
-	LOCALSTACK_ENVIRONMENT_PATH  string = DEVELOPMENT_ENVIRONMENT_PATH + "/localstack/"
-	WIREMOCK_ENVIRONMENT_PATH    string = DEVELOPMENT_ENVIRONMENT_PATH + "/wiremock/"
+	DEVELOPMENT_ENVIRONMENT_PATH  string = "../../../development-environment"
+	DATABASE_ENVIRONMENT_PATH     string = DEVELOPMENT_ENVIRONMENT_PATH + "/database/"
+	REST_ENVIRONMENT_PATH         string = DEVELOPMENT_ENVIRONMENT_PATH + "/rest/"
+	LOCALSTACK_ENVIRONMENT_PATH   string = DEVELOPMENT_ENVIRONMENT_PATH + "/localstack/"
+	GCP_EMULATOR_ENVIRONMENT_PATH string = DEVELOPMENT_ENVIRONMENT_PATH + "/gcp-emulator/"
+	WIREMOCK_ENVIRONMENT_PATH     string = DEVELOPMENT_ENVIRONMENT_PATH + "/wiremock/"
 )
 
 var m sync.Mutex
@@ -54,6 +57,23 @@ func InitializeTestLocalstack(path ...string) {
 func getLocalstackBasePath(path ...string) string {
 	if len(path) == 0 {
 		return MountAbsolutPath(LOCALSTACK_ENVIRONMENT_PATH)
+	}
+	return path[0]
+}
+
+func InitializeGcpEmulator(path ...string) {
+	m.Lock()
+	ctx := context.WithValue(context.Background(), gcpEmulatorID, uuid.New().String())
+	_ = UseGcpEmulatorContainer(ctx, getGcpEmulatorBasePath(path...))
+	loadConfig()
+	config.CLOUD = config.CLOUD_GCP
+	cloud.Initialize()
+	m.Unlock()
+}
+
+func getGcpEmulatorBasePath(path ...string) string {
+	if len(path) == 0 {
+		return MountAbsolutPath(GCP_EMULATOR_ENVIRONMENT_PATH)
 	}
 	return path[0]
 }
