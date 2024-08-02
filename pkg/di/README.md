@@ -38,7 +38,8 @@ Exemplo básico:
 
 No exemplo acima, os construtores foram registrados no container por meio do método `AddDependencies`. Após o registro das dependências, inicia-se a aplicação por meio do método `StartApp`, que recebe como parâmetro uma função responsável por iniciar todo o fluxo da aplicação. Após o recebimento da função de inicialização do sistema, o container identifica e instancia, por meio dos parâmetros dos construtores, as dependências de cada objeto do sistema.
 
-## Beans
+## Conceitos fundamentais
+### Beans
 
 Os objetos que formam a espinha dorsal da sua aplicação e que são gerenciados pelo contêiner de DI são chamados de beans. Um bean é um objeto instanciado, montado e gerenciado por um contêiner de DI.
 
@@ -53,6 +54,8 @@ Quanto ao seu comportamento, os beans podem ser classificados em dois tipos:
  - **Beans locais** são os beans que são criados no momento da injeção
  - **Beans globais** são os beans criados um única vez e injetados em vários outros beans
 
+![beans-comparation](beans-comparation.png)
+
 A tabela abaixo relaciona todas as propriedades dos beans:
 
 | Propriedade | Descrição |
@@ -66,7 +69,7 @@ A tabela abaixo relaciona todas as propriedades dos beans:
 | ParamTypes | Os parametros de contrução do bena |
 
 
-## Construtores de beans
+### Construtores de beans
 
 Contrutores são funções responsáveis por criar os beans.
 
@@ -74,7 +77,7 @@ Os contrutores de beans só podem ter 1 valor de retorno, que é o própio bean.
 
 Os contrutores de beans devem obrigatoriamente receber outros benas como parametro ou não receber nenhum parametro (construtores raiz)
 
-## Desambiguação
+### Desambiguação
 
 Durante o processo de mapeamento e injeção, caso seja encontrado mais de um construtor para um bean, usa-se os metadados das tags para descobrir qual deve ser injetado.
 
@@ -92,11 +95,11 @@ Durante o processo de mapeamento e injeção, caso seja encontrado mais de um co
 
 > **Observação:** a desambiguação não funciona em parâmetros variádicos
   
-# Fluxo de funcionamento do contêiner
+## Fluxo de funcionamento do contêiner
 
-O container de injeção de dependência funciona por meio de um processo de empilhamento e injeção. Na fase de empilhamento, são identificadas as dependências de um objeto e as dependências dessas dependências, em um ciclo recursivo que termina ao encontrar objetos que não necessitam de injeção de dependência. Na fase de injeção, os objetos mapeados na pilha são criados de forma que os objetos no topo da pilha são utilizados como parâmetros para a criação dos objetos nas camadas inferiores.
+O container de injeção de dependência funciona por meio de um processo de empilhamento e desempilhamento(injeção). Na fase de empilhamento, são identificadas as dependências de um objeto e as dependências dessas dependências, em um ciclo recursivo que termina ao encontrar objetos que não necessitam de injeção de dependência. Na fase de injeção, os objetos mapeados na pilha são criados de forma que os objetos no topo da pilha são utilizados como parâmetros para a criação dos objetos nas camadas inferiores.
 
-![flow](flow.png)
+![flow](flow-1.png)
 
 1. Registram-se os construtores responsáveis por criar todas as dependências da aplicação. As dependências criadas pelos construtores e injetadas nos parâmetros de outros construtores são chamadas de beans.
 
