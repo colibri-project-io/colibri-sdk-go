@@ -17,14 +17,14 @@ func NewContainer() Container {
 	}
 }
 
-func (c *Container) AddDependencies(deps []interface{}) {
+func (c *Container) AddDependencies(deps ...interface{}) {
 	// Gera o array com as dependencias
 	ReflectTypeArray := generateDependenciesArray(deps, false)
 	c.checkingNameUnit(ReflectTypeArray)
 	maps.Copy(c.dependencies, ReflectTypeArray)
 }
 
-func (c *Container) AddGlobalDependencies(deps []interface{}) {
+func (c *Container) AddGlobalDependencies(deps ...interface{}) {
 	// Gera o array com as dependencias
 	ReflectTypeArray := generateDependenciesArray(deps, true)
 	c.checkingNameUnit(ReflectTypeArray)
