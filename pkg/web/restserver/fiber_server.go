@@ -136,3 +136,10 @@ func (f *fiberWebServer) registerCustomMiddleware(m CustomMiddleware) {
 
 	f.srv.Use(fn)
 }
+
+func (f *fiberWebServer) injectStaticRoutes() {
+	for _, staticRoute := range staticContentRoutes {
+		logging.Info("Registering static route on %s serving from folder %s", staticRoute.URI, staticRoute.Path)
+		f.srv.Static(staticRoute.URI, staticRoute.Path)
+	}
+}
