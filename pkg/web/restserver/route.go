@@ -26,6 +26,11 @@ type Route struct {
 	BeforeEnter func(ctx WebContext) *MiddlewareError
 }
 
+type StaticRoute struct {
+	URI  string
+	Path string
+}
+
 type healtCheck struct {
 	Status string `json:"status"`
 }
