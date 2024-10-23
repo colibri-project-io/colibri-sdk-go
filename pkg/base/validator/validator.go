@@ -54,7 +54,7 @@ func registerUUIDCustomType() {
 //
 // It takes an array of strings as input parameters and returns an interface{} and an error.
 func registerIsoDateCustomType() {
-	instance.formDecoder.RegisterCustomTypeFunc(func(vals []string) (interface{}, error) {
+	instance.formDecoder.RegisterCustomTypeFunc(func(vals []string) (any, error) {
 		return types.ParseIsoDate(vals[0])
 	}, types.IsoDate{})
 }
@@ -63,7 +63,7 @@ func registerIsoDateCustomType() {
 //
 // It takes an array of strings as input parameters and returns an interface{} and an error.
 func registerIsoTimeCustomType() {
-	instance.formDecoder.RegisterCustomTypeFunc(func(vals []string) (interface{}, error) {
+	instance.formDecoder.RegisterCustomTypeFunc(func(vals []string) (any, error) {
 		return types.ParseIsoTime(vals[0])
 	}, types.IsoTime{})
 }
