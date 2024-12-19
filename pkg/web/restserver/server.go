@@ -15,6 +15,8 @@ var (
 	srv               Server
 	customAuth        CustomAuthenticationMiddleware
 
+	staticContentRoutes []StaticRoute
+
 	errUserUnauthenticated = errors.New("user not authenticated")
 )
 
@@ -26,11 +28,16 @@ type Server interface {
 	injectCustomMiddlewares()
 	injectRoutes()
 	listenAndServe() error
+	injectStaticRoutes()
 }
 
 // AddRoutes add list of routes in the webrest server
 func AddRoutes(routes []Route) {
 	srvRoutes = append(srvRoutes, routes...)
+}
+
+func AddStaticRoute(route StaticRoute) {
+	staticContentRoutes = append(staticContentRoutes, route)
 }
 
 func CustomAuthMiddleware(fn CustomAuthenticationMiddleware) {
@@ -51,6 +58,7 @@ func ListenAndServe() {
 	srv.injectMiddlewares()
 	srv.injectCustomMiddlewares()
 	srv.injectRoutes()
+	srv.injectStaticRoutes()
 
 	observer.Attach(restObserver{})
 	logging.Info("Service '%s' running in %d port", "WEB-REST", config.PORT)
