@@ -28,18 +28,33 @@ func (s *firebaseAuthService) GetUser(ctx context.Context, id string) (*User, er
 	}
 
 	return &User{
-		ID:    user.UID,
-		Email: user.Email,
-		Name:  user.DisplayName,
+		ID:       user.UID,
+		Email:    user.Email,
+		Phone:    user.PhoneNumber,
+		Name:     user.DisplayName,
+		TenantID: user.CustomClaims[tenantIdField].(string),
+		Profile:  user.CustomClaims[profileField].(string),
+		Profiles: user.CustomClaims[profilesField].([]string),
+		PhotoURL: user.PhotoURL,
 	}, nil
 }
 
 func (s *firebaseAuthService) CreateUser(ctx context.Context, user *UserCreate) error {
 	userToCreate := (&auth.UserToCreate{}).
 		UID(user.ID).
-		Email(user.Email).
-		Password(user.Password).
 		DisplayName(user.Name)
+
+	if user.Email != "" {
+		userToCreate.Email(user.Email)
+	}
+
+	if user.Phone != "" {
+		userToCreate.PhoneNumber(user.Phone)
+	}
+
+	if user.Password != "" {
+		userToCreate.Password(user.Password)
+	}
 
 	if user.PhotoURL != "" {
 		userToCreate.PhotoURL(user.PhotoURL)
@@ -52,6 +67,7 @@ func (s *firebaseAuthService) CreateUser(ctx context.Context, user *UserCreate) 
 	userToSetClaims := &auth.UserToUpdate{}
 	userToSetClaims.CustomClaims(map[string]any{
 		profileField:  user.Profile,
+		profilesField: user.Profiles,
 		tenantIdField: user.TenantID,
 	})
 	_, err := s.client.UpdateUser(ctx, user.ID, userToSetClaims)
@@ -63,6 +79,10 @@ func (s *firebaseAuthService) UpdateUser(ctx context.Context, id string, user *U
 	userToUpdate := &auth.UserToUpdate{}
 	if user.Email != "" {
 		userToUpdate.Email(user.Email)
+	}
+
+	if user.Phone != "" {
+		userToUpdate.PhoneNumber(user.Phone)
 	}
 
 	if user.Password != "" {
@@ -79,6 +99,7 @@ func (s *firebaseAuthService) UpdateUser(ctx context.Context, id string, user *U
 
 	userToUpdate.CustomClaims(map[string]any{
 		profileField:  user.Profile,
+		profilesField: user.Profiles,
 		tenantIdField: user.TenantID,
 	})
 
